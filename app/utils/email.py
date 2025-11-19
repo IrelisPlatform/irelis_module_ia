@@ -1,4 +1,6 @@
-from app.core.logging import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def send_email(to: str, subject: str, body: str) -> None:

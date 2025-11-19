@@ -1,4 +1,38 @@
-from .user import User
-from .job import Job
-
-__all__ = ["User", "Job"]
+from .entities import (
+    Candidate,
+    CandidateSkill,
+    ChatSession,
+    DesiredPosition,
+    DesiredPositionType,
+    Education,
+    Experience,
+    Language,
+    Message,
+    Offer,
+    OfferSkill,
+    OfferTemplate,
+    Project,
+    Recommendation,
+    Recruiter,
+    Search,
+    User,
+)
+__all__ = [
+    "User",
+    "Candidate",
+    "Recruiter",
+    "Recommendation",
+    "ChatSession",
+    "Message",
+    "Search",
+    "OfferTemplate",
+    "Offer",
+    "OfferSkill",
+    "CandidateSkill",
+    "DesiredPosition",
+    "DesiredPositionType",
+    "Education",
+    "Experience",
+    "Project",
+    "Language",
+]
