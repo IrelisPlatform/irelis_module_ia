@@ -326,6 +326,9 @@ class OfferTemplate(Base):
     offers = relationship(
         "Offer", back_populates="template", cascade="all, delete-orphan"
     )
+    skills = relationship(
+        "OfferSkill", back_populates="template", cascade="all, delete-orphan"
+    )
 
 
 class Offer(Base):
@@ -385,14 +388,18 @@ class OfferSkill(Base):
     id = Column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
+    template_id = Column(
+        UUID(as_uuid=True), ForeignKey("offer_templates.id"), nullable=True
+    )
     offer_id = Column(
-        UUID(as_uuid=True), ForeignKey("offers.id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("offers.id"), nullable=True
     )
     title = Column(String(255), nullable=False)
     created_at = Column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
+    template = relationship("OfferTemplate", back_populates="skills")
     offer = relationship("Offer", back_populates="skills")
 
 

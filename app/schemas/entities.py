@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 from app.models.enums import (
     LanguageLevel,
@@ -60,6 +62,13 @@ class CandidateRead(CandidateBase):
     id: UUID
     user_id: UUID
     created_at: datetime
+    skills: list["CandidateSkillRead"] = Field(default_factory=list)
+    desired_positions: list["DesiredPositionRead"] = Field(default_factory=list)
+    desired_position_types: list["DesiredPositionTypeRead"] = Field(default_factory=list)
+    educations: list["EducationRead"] = Field(default_factory=list)
+    experiences: list["ExperienceRead"] = Field(default_factory=list)
+    projects: list["ProjectRead"] = Field(default_factory=list)
+    languages: list["LanguageRead"] = Field(default_factory=list)
 
     class Config:
         from_attributes = True
@@ -199,6 +208,7 @@ class OfferTemplateRead(OfferTemplateBase):
     id: UUID
     recruiter_id: UUID
     created_at: datetime
+    skills: list["OfferSkillRead"] = Field(default_factory=list)
 
     class Config:
         from_attributes = True
@@ -235,6 +245,7 @@ class OfferRead(OfferBase):
     template_id: UUID | None
     recruiter_id: UUID
     created_at: datetime
+    skills: list["OfferSkillRead"] = Field(default_factory=list)
 
     class Config:
         from_attributes = True
@@ -245,12 +256,14 @@ class OfferSkillBase(BaseModel):
 
 
 class OfferSkillCreate(OfferSkillBase):
-    offer_id: UUID
+    offer_id: UUID | None = None
+    template_id: UUID | None = None
 
 
 class OfferSkillRead(OfferSkillBase):
     id: UUID
-    offer_id: UUID
+    offer_id: UUID | None = None
+    template_id: UUID | None = None
     created_at: datetime
 
     class Config:
