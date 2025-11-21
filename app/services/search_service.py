@@ -4,13 +4,16 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
+from app.repositories.offer_repository import OfferRepository
+from app.repositories.candidate_repository import CandidateRepository
 from app.repositories.search_repository import SearchRepository
-from app.schemas import SearchRead
+from app.schemas import OfferRead, SearchCreate, SearchRead
 
 
 class SearchService:
     def __init__(self, db: Session):
         self.repo = SearchRepository(db)
+        self.offer_repo = OfferRepository(db)
 
     def list_searches(self) -> list[SearchRead]:
         return [SearchRead.model_validate(s) for s in self.repo.list()]
@@ -26,3 +29,8 @@ class SearchService:
             SearchRead.model_validate(s)
             for s in self.repo.list_by_user(user_id)
         ]
+
+    def execute_search(self, payload: SearchCreate) -> list[OfferRead]:
+        search = self.repo.create(payload)
+        offers = self.offer_repo.search_by_payload(payload)
+        return [OfferRead.model_validate(offer) for offer in offers]

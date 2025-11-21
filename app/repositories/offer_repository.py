@@ -4,7 +4,9 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session, selectinload
 
-from app.models import Offer
+from app.models import Candidate, Offer, OfferSkill
+from app.models.enums import Mobility
+from app.schemas import SearchCreate
 
 
 class OfferRepository:
@@ -31,3 +33,67 @@ class OfferRepository:
             .filter(Offer.recruiter_id == recruiter_id)
             .all()
         )
+
+    def search_for_candidate(
+        self,
+        candidate: Candidate,
+        search_filters: dict | None = None,
+    ) -> list[Offer]:
+        filters = search_filters or {}
+        query = self._query()
+
+        mobility = filters.get("mobility") or candidate.mobility
+        if mobility:
+            allowed = {mobility}
+            if mobility == Mobility.REMOTE:
+                allowed.add(Mobility.HYBRID)
+            elif mobility == Mobility.ON_SITE:
+                allowed.add(Mobility.HYBRID)
+            elif mobility == Mobility.HYBRID:
+                allowed.update({Mobility.REMOTE, Mobility.ON_SITE})
+            query = query.filter(Offer.mobility.in_(allowed))
+
+        desired_types = (
+            [filters.get("contract_type")]
+            if filters.get("contract_type")
+            else [ptype.type for ptype in candidate.desired_position_types]
+        )
+        desired_types = [ptype for ptype in desired_types if ptype]
+        if desired_types:
+            query = query.filter(Offer.position_type.in_(desired_types))
+
+        country = filters.get("country") or candidate.country
+        city = filters.get("city") or candidate.city
+        if country:
+            query = query.filter(Offer.country == country)
+        if city:
+            query = query.filter(Offer.city == city)
+
+        skill_titles = filters.get("skills") or [skill.title for skill in candidate.skills]
+        if skill_titles:
+            query = query.filter(Offer.skills.any(OfferSkill.title.in_(skill_titles)))
+
+        return query.all()
+
+    def search_by_payload(self, payload: SearchCreate) -> list[Offer]:
+        query = self._query()
+
+        if payload.query:
+            terms = [term.strip() for term in payload.query.split() if term.strip()]
+            print(terms)
+            for term in terms:
+                like = f"%{term}%"
+                query = query.filter(
+                    Offer.title.ilike(like)
+                    | Offer.description.ilike(like)
+                )
+
+        if payload.country:
+            query = query.filter(Offer.country == payload.country)
+        if payload.city:
+            query = query.filter(Offer.city == payload.city)
+
+        if payload.contract_type:
+            query = query.filter(Offer.position_type == payload.contract_type)
+
+        return query.all()

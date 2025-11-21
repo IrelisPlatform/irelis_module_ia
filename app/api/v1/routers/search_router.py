@@ -3,11 +3,12 @@ from __future__ import annotations
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.api.v1 import deps
-from app.schemas import SearchRead
+from app.models.enums import PositionType, SearchTarget, SearchType
+from app.schemas import OfferRead, SearchCreate, SearchRead
 from app.services.search_service import SearchService
 
 router = APIRouter()
@@ -39,3 +40,35 @@ def list_searches_by_user(
     db: Annotated[Session, Depends(deps.get_db)],
 ) -> list[SearchRead]:
     return SearchService(db).list_by_user(user_id)
+
+
+@router.get(
+    "/search/offers",
+    response_model=list[OfferRead],
+    tags=["searches", "offres"],
+)
+def execute_search(
+    user_id: UUID,
+    db: Annotated[Session, Depends(deps.get_db)],
+    query: str | None = Query(None, description="Texte libre, ex: 'CDI Développeur Backend'"),
+    search_type: SearchType = Query(SearchType.DEFAULT, alias="type"),
+    country: str | None = None,
+    city: str | None = None,
+    contract_type: PositionType | None = None,
+) -> list[OfferRead]:
+    if not query and not contract_type and not country:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="At least one search criterion (query/country/contract_type) is required.",
+        )
+
+    payload = SearchCreate(
+        user_id=user_id,
+        query=query,
+        type=search_type,
+        target="offer",
+        country=country,
+        city=city,
+        contract_type=contract_type,
+    )
+    return SearchService(db).execute_search(payload)

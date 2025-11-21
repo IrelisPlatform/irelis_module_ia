@@ -6,6 +6,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from app.models import Search
+from app.schemas import SearchCreate
 
 
 class SearchRepository:
@@ -30,3 +31,10 @@ class SearchRepository:
             .filter(Search.user_id == user_id)
             .all()
         )
+
+    def create(self, payload: SearchCreate) -> Search:
+        search = Search(**payload.model_dump())
+        self.db.add(search)
+        self.db.commit()
+        self.db.refresh(search)
+        return search
