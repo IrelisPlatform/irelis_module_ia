@@ -36,3 +36,20 @@ def get_candidate(
             detail="Candidate not found",
         )
     return candidate
+
+@router.get(
+    "/by_user/{user_id}",
+    response_model=CandidateRead,
+    tags=["candidats"],
+)
+def get_candidate_by_user(
+    user_id: UUID,
+    db: Annotated[Session, Depends(deps.get_db)],
+) -> CandidateRead:
+    candidate = CandidateService(db).get_candidate_by_user(user_id)
+    if candidate is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Candidate not found",
+        )
+    return candidate

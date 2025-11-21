@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from uuid import UUID
+import unicodedata
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload
 
 from app.models import Candidate, Offer, OfferSkill
@@ -79,13 +81,20 @@ class OfferRepository:
         query = self._query()
 
         if payload.query:
-            terms = [term.strip() for term in payload.query.split() if term.strip()]
-            print(terms)
+            terms = [
+                _normalize_term(term)
+                for term in payload.query.split()
+                if term.strip()
+            ]
             for term in terms:
                 like = f"%{term}%"
                 query = query.filter(
-                    Offer.title.ilike(like)
-                    | Offer.description.ilike(like)
+                    func.lower(
+                        func.translate(Offer.title, ACCENTED_CHARS, UNACCENTED_EQUIV)
+                    ).like(like)
+                    | func.lower(
+                        func.translate(Offer.description, ACCENTED_CHARS, UNACCENTED_EQUIV)
+                    ).like(like)
                 )
 
         if payload.country:
@@ -97,3 +106,10 @@ class OfferRepository:
             query = query.filter(Offer.position_type == payload.contract_type)
 
         return query.all()
+ACCENTED_CHARS = "àáâäãåçèéêëìíîïñòóôöõùúûüýÿÀÁÂÄÃÅÇÈÉÊËÌÍÎÏÑÒÓÔÖÕÙÚÛÜÝ"
+UNACCENTED_EQUIV = "aaaaaaceeeeiiiinooooouuuuyyAAAAAACEEEEIIIINOOOOOUUUUY"
+
+
+def _normalize_term(term: str) -> str:
+    normalized = unicodedata.normalize("NFKD", term)
+    return "".join(c for c in normalized if not unicodedata.combining(c)).lower()

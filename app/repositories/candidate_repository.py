@@ -36,3 +36,11 @@ class CandidateRepository:
             .filter(Candidate.id == candidate_id)
             .first()
         )
+    
+    def get_by_user_id(self, user_id: UUID) -> Candidate | None:
+        return (
+            self._query_with_relationships()
+            .filter(Candidate.user_id == user_id)
+            .first()
+        )
+

@@ -66,7 +66,7 @@ def execute_search(
         user_id=user_id,
         query=query,
         type=search_type,
-        target="offer",
+        target=SearchTarget.OFFER,
         country=country,
         city=city,
         contract_type=contract_type,
