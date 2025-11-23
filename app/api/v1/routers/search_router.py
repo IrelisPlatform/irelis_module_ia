@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.api.v1 import deps
 from app.models.enums import PositionType, SearchTarget, SearchType
-from app.schemas import OfferRead, SearchCreate, SearchRead
+from app.schemas import OfferRead, SearchBase, SearchRead
 from app.services.search_service import SearchService
 
 router = APIRouter()
@@ -48,8 +48,12 @@ def list_searches_by_user(
     tags=["searches", "offres"],
 )
 def execute_search(
-    user_id: UUID,
     db: Annotated[Session, Depends(deps.get_db)],
+    user_id: UUID | None = Query(
+        default=None,
+        description="Identifiant de l'utilisateur. "
+        "Permet de lier la recherche et de prioriser les résultats pour un candidat.",
+    ),
     query: str | None = Query(None, description="Texte libre, ex: 'CDI Développeur Backend'"),
     search_type: SearchType = Query(SearchType.DEFAULT, alias="type"),
     country: str | None = None,
@@ -62,8 +66,7 @@ def execute_search(
             detail="At least one search criterion (query/country/contract_type) is required.",
         )
 
-    payload = SearchCreate(
-        user_id=user_id,
+    payload = SearchBase(
         query=query,
         type=search_type,
         target=SearchTarget.OFFER,
@@ -71,4 +74,4 @@ def execute_search(
         city=city,
         contract_type=contract_type,
     )
-    return SearchService(db).execute_search(payload)
+    return SearchService(db).execute_search(payload, user_id=user_id)

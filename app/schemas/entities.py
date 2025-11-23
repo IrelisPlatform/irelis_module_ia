@@ -246,6 +246,7 @@ class OfferRead(OfferBase):
     recruiter_id: UUID
     created_at: datetime
     skills: list["OfferSkillRead"] = Field(default_factory=list)
+    compatibility_score: float | None = None
 
     class Config:
         from_attributes = True

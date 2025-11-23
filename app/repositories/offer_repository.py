@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.models import Candidate, Offer, OfferSkill
 from app.models.enums import Mobility
-from app.schemas import SearchCreate
+from app.schemas import SearchBase
 
 
 class OfferRepository:
@@ -77,7 +77,7 @@ class OfferRepository:
 
         return query.all()
 
-    def search_by_payload(self, payload: SearchCreate) -> list[Offer]:
+    def search_by_payload(self, payload: SearchBase) -> list[Offer]:
         query = self._query()
 
         if payload.query:
