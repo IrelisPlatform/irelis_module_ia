@@ -4,7 +4,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session, selectinload
 
-from app.models import Candidate
+from app.models import Candidate, JobPreferences, JobPreferencesSector
 
 
 class CandidateRepository:
@@ -14,17 +14,19 @@ class CandidateRepository:
         self.db = db
 
     def _query_with_relationships(self):
-        return (
-            self.db.query(Candidate)
-            .options(
-                selectinload(Candidate.skills),
-                selectinload(Candidate.desired_positions),
-                selectinload(Candidate.desired_position_types),
-                selectinload(Candidate.educations),
-                selectinload(Candidate.experiences),
-                selectinload(Candidate.projects),
-                selectinload(Candidate.languages),
-            )
+        return self.db.query(Candidate).options(
+            selectinload(Candidate.skills),
+            selectinload(Candidate.languages),
+            selectinload(Candidate.educations),
+            selectinload(Candidate.experiences),
+            selectinload(Candidate.job_preferences).options(
+                selectinload(JobPreferences.contract_types),
+                selectinload(JobPreferences.sectors).selectinload(
+                    JobPreferencesSector.sector
+                ),
+            ),
+            selectinload(Candidate.applications),
+            selectinload(Candidate.saved_job_offers),
         )
 
     def list(self) -> list[Candidate]:
@@ -43,4 +45,3 @@ class CandidateRepository:
             .filter(Candidate.user_id == user_id)
             .first()
         )
-

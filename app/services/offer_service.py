@@ -5,22 +5,22 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from app.repositories.offer_repository import OfferRepository
-from app.schemas import OfferRead
+from app.schemas import JobOfferRead
 
 
 class OfferService:
     def __init__(self, db: Session):
         self.repo = OfferRepository(db)
 
-    def list_offers(self) -> list[OfferRead]:
-        return [OfferRead.model_validate(offer) for offer in self.repo.list()]
+    def list_offers(self) -> list[JobOfferRead]:
+        return [JobOfferRead.model_validate(offer) for offer in self.repo.list()]
 
-    def get_offer(self, offer_id: UUID) -> OfferRead | None:
+    def get_offer(self, offer_id: UUID) -> JobOfferRead | None:
         offer = self.repo.get(offer_id)
         if offer is None:
             return None
-        return OfferRead.model_validate(offer)
+        return JobOfferRead.model_validate(offer)
 
-    def list_by_recruiter(self, recruiter_id: UUID) -> list[OfferRead]:
+    def list_by_recruiter(self, recruiter_id: UUID) -> list[JobOfferRead]:
         offers = self.repo.list_by_recruiter(recruiter_id)
-        return [OfferRead.model_validate(offer) for offer in offers]
+        return [JobOfferRead.model_validate(offer) for offer in offers]

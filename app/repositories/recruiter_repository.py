@@ -4,7 +4,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session, selectinload
 
-from app.models import Offer, OfferTemplate, Recruiter, User
+from app.models import JobOffer, Recruiter, User
 
 
 class RecruiterRepository:
@@ -18,8 +18,8 @@ class RecruiterRepository:
             self.db.query(Recruiter)
             .options(
                 selectinload(Recruiter.user),
-                selectinload(Recruiter.offer_templates),
-                selectinload(Recruiter.offers),
+                selectinload(Recruiter.sector),
+                selectinload(Recruiter.job_offers),
             )
         )
 
@@ -29,16 +29,9 @@ class RecruiterRepository:
     def get(self, recruiter_id: UUID) -> Recruiter | None:
         return self._query().filter(Recruiter.id == recruiter_id).first()
 
-    def list_offer_templates(self, recruiter_id: UUID) -> list[OfferTemplate]:
+    def list_offers(self, recruiter_id: UUID) -> list[JobOffer]:
         return (
-            self.db.query(OfferTemplate)
-            .filter(OfferTemplate.recruiter_id == recruiter_id)
-            .all()
-        )
-
-    def list_offers(self, recruiter_id: UUID) -> list[Offer]:
-        return (
-            self.db.query(Offer)
-            .filter(Offer.recruiter_id == recruiter_id)
+            self.db.query(JobOffer)
+            .filter(JobOffer.company_id == recruiter_id)
             .all()
         )

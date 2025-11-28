@@ -1,39 +1,50 @@
 from __future__ import annotations
 
-from datetime import date, datetime
-from decimal import Decimal
+from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field
 
 from app.models.enums import (
+    ApplicationStatus,
+    ContractType,
+    ExperienceLevel,
+    JobOfferStatus,
+    JobType,
     LanguageLevel,
-    Mobility,
-    NotificationDelay,
-    PositionType,
-    RecommendationTarget,
-    SalaryType,
-    SearchTarget,
-    SearchType,
-    SeniorityLevel,
+    OtpPurpose,
+    Provider,
+    SchoolLevel,
+    SkillLevel,
     UserRole,
+    UserType,
 )
 
 
 class UserBase(BaseModel):
-    first_name: str
-    last_name: str
     email: EmailStr
-    phone: str | None = None
-    role: UserRole = UserRole.CANDIDATE
-
-
-class UserCreate(UserBase):
-    pass
+    role: UserRole
+    provider: Provider
+    user_type: UserType | None = None
 
 
 class UserRead(UserBase):
     id: UUID
+    created_at: datetime
+    updated_at: datetime | None = None
+    deleted: bool
+    deleted_at: datetime | None = None
+    email_verified_at: datetime | None = None
+    last_login: datetime | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class SectorRead(BaseModel):
+    id: UUID
+    name: str | None = None
+    description: str | None = None
     created_at: datetime
     updated_at: datetime | None = None
 
@@ -41,363 +52,238 @@ class UserRead(UserBase):
         from_attributes = True
 
 
-class CandidateBase(BaseModel):
-    mobility: Mobility | None = None
-    country: str | None = None
+class EducationRead(BaseModel):
+    id: UUID
     city: str | None = None
-    town: str | None = None
-    address: str | None = None
-    salary_min: Decimal | None = None
-    salary_avg: Decimal | None = None
-    salary_max: Decimal | None = None
-    notification_delay: NotificationDelay | None = None
-    notification_enabled: bool = True
-
-
-class CandidateCreate(CandidateBase):
-    user_id: UUID
-
-
-class CandidateRead(CandidateBase):
-    id: UUID
-    user_id: UUID
+    degree: str | None = None
+    graduation_year: int | None = None
+    institution: str | None = None
+    candidate_id: UUID
     created_at: datetime
-    skills: list["CandidateSkillRead"] = Field(default_factory=list)
-    desired_positions: list["DesiredPositionRead"] = Field(default_factory=list)
-    desired_position_types: list["DesiredPositionTypeRead"] = Field(default_factory=list)
-    educations: list["EducationRead"] = Field(default_factory=list)
-    experiences: list["ExperienceRead"] = Field(default_factory=list)
-    projects: list["ProjectRead"] = Field(default_factory=list)
-    languages: list["LanguageRead"] = Field(default_factory=list)
+    updated_at: datetime | None = None
 
     class Config:
         from_attributes = True
 
 
-class RecruiterBase(BaseModel):
-    organization_name: str
-
-
-class RecruiterCreate(RecruiterBase):
-    user_id: UUID
-
-
-class RecruiterRead(RecruiterBase):
+class ExperienceRead(BaseModel):
     id: UUID
-    user_id: UUID
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
-class RecommendationBase(BaseModel):
-    label: str
-    target: RecommendationTarget
-
-
-class RecommendationCreate(RecommendationBase):
-    user_id: UUID
-    number: int = 0
-
-
-class RecommendationRead(RecommendationBase):
-    id: UUID
-    user_id: UUID
-    number: int
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
-class ChatSessionBase(BaseModel):
-    token: str
-    bot: bool = False
-
-
-class ChatSessionCreate(ChatSessionBase):
-    user_id: UUID
-    other_user_id: UUID | None = None
-
-
-class ChatSessionRead(ChatSessionBase):
-    id: UUID
-    user_id: UUID
-    other_user_id: UUID | None
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
-class MessageBase(BaseModel):
-    content: str
-
-
-class MessageCreate(MessageBase):
-    session_id: UUID
-    sender_id: UUID
-    receiver_id: UUID
-
-
-class MessageRead(MessageBase):
-    id: UUID
-    session_id: UUID
-    sender_id: UUID
-    receiver_id: UUID
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
-class SearchBase(BaseModel):
-    query: str | None = None
-    type: SearchType = SearchType.DEFAULT
-    target: SearchTarget
-    country: str | None = None
     city: str | None = None
-    town: str | None = None
-    contract_type: PositionType | None = None
-    education_level: str | None = None
-    experience: str | None = None
+    company_name: str | None = None
+    description: str | None = None
+    end_date: datetime | None = None
+    is_current: bool | None = None
+    position: str | None = None
+    start_date: datetime
+    candidate_id: UUID
+    created_at: datetime
+    updated_at: datetime | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class SkillRead(BaseModel):
+    id: UUID
+    level: SkillLevel | None = None
+    name: str | None = None
+    candidate_id: UUID
+    created_at: datetime
+    updated_at: datetime | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class LanguageRead(BaseModel):
+    id: UUID
     language: str | None = None
-    date_publication: datetime | None = None
-
-
-class SearchCreate(SearchBase):
-    user_id: UUID
-
-
-class SearchRead(SearchBase):
-    id: UUID
-    user_id: UUID
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
-class OfferTemplateBase(BaseModel):
-    title: str
-    description: str | None = None
-    mobility: Mobility | None = None
-    position_type: PositionType
-    seniority: SeniorityLevel | None = None
-    duration_months: int | None = None
-    salary_min: Decimal | None = None
-    salary_max: Decimal | None = None
-    salary_avg: Decimal | None = None
-    salary_type: SalaryType | None = None
-    experience_years: int | None = None
-    priority_level: int | None = None
-    country: str | None = None
-    city: str | None = None
-    town: str | None = None
-    address: str | None = None
-    language: str | None = None
-    ended_at: datetime | None = None
-
-
-class OfferTemplateCreate(OfferTemplateBase):
-    recruiter_id: UUID
-
-
-class OfferTemplateRead(OfferTemplateBase):
-    id: UUID
-    recruiter_id: UUID
-    created_at: datetime
-    skills: list["OfferSkillRead"] = Field(default_factory=list)
-
-    class Config:
-        from_attributes = True
-
-
-class OfferBase(BaseModel):
-    title: str
-    description: str | None = None
-    mobility: Mobility | None = None
-    position_type: PositionType
-    seniority: SeniorityLevel | None = None
-    duration_months: int | None = None
-    salary_min: Decimal | None = None
-    salary_max: Decimal | None = None
-    salary_avg: Decimal | None = None
-    salary_type: SalaryType | None = None
-    experience_years: int | None = None
-    priority_level: int | None = None
-    country: str | None = None
-    city: str | None = None
-    town: str | None = None
-    address: str | None = None
-    language: str | None = None
-    ended_at: datetime | None = None
-
-
-class OfferCreate(OfferBase):
-    recruiter_id: UUID
-    template_id: UUID | None = None
-
-
-class OfferRead(OfferBase):
-    id: UUID
-    template_id: UUID | None
-    recruiter_id: UUID
-    created_at: datetime
-    skills: list["OfferSkillRead"] = Field(default_factory=list)
-    compatibility_score: float | None = None
-
-    class Config:
-        from_attributes = True
-
-
-class OfferSkillBase(BaseModel):
-    title: str
-
-
-class OfferSkillCreate(OfferSkillBase):
-    offer_id: UUID | None = None
-    template_id: UUID | None = None
-
-
-class OfferSkillRead(OfferSkillBase):
-    id: UUID
-    offer_id: UUID | None = None
-    template_id: UUID | None = None
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
-class CandidateSkillBase(BaseModel):
-    title: str
-
-
-class CandidateSkillCreate(CandidateSkillBase):
-    candidate_id: UUID
-
-
-class CandidateSkillRead(CandidateSkillBase):
-    id: UUID
-    candidate_id: UUID
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
-class DesiredPositionBase(BaseModel):
-    title: str
-    level: SeniorityLevel | None = None
-
-
-class DesiredPositionCreate(DesiredPositionBase):
-    candidate_id: UUID
-
-
-class DesiredPositionRead(DesiredPositionBase):
-    id: UUID
-    candidate_id: UUID
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
-class DesiredPositionTypeBase(BaseModel):
-    type: PositionType
-
-
-class DesiredPositionTypeCreate(DesiredPositionTypeBase):
-    candidate_id: UUID
-
-
-class DesiredPositionTypeRead(DesiredPositionTypeBase):
-    id: UUID
-    candidate_id: UUID
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
-class EducationBase(BaseModel):
-    title: str
-    school: str | None = None
-    description: str | None = None
-    start_date: date | None = None
-    end_date: date | None = None
-
-
-class EducationCreate(EducationBase):
-    candidate_id: UUID
-
-
-class EducationRead(EducationBase):
-    id: UUID
-    candidate_id: UUID
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
-class ExperienceBase(BaseModel):
-    title: str
-    company: str | None = None
-    description: str | None = None
-    start_date: date | None = None
-    end_date: date | None = None
-
-
-class ExperienceCreate(ExperienceBase):
-    candidate_id: UUID
-
-
-class ExperienceRead(ExperienceBase):
-    id: UUID
-    candidate_id: UUID
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
-class ProjectBase(BaseModel):
-    title: str
-    description: str | None = None
-    start_date: date | None = None
-    end_date: date | None = None
-
-
-class ProjectCreate(ProjectBase):
-    candidate_id: UUID
-
-
-class ProjectRead(ProjectBase):
-    id: UUID
-    candidate_id: UUID
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
-class LanguageBase(BaseModel):
-    title: str
     level: LanguageLevel | None = None
-
-
-class LanguageCreate(LanguageBase):
-    candidate_id: UUID
-
-
-class LanguageRead(LanguageBase):
-    id: UUID
     candidate_id: UUID
     created_at: datetime
+    updated_at: datetime | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class JobPreferencesContractTypeRead(BaseModel):
+    contract_type: ContractType
+
+    class Config:
+        from_attributes = True
+
+
+class JobPreferencesSectorLinkRead(BaseModel):
+    sector_id: UUID
+    sector: SectorRead | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class JobPreferencesRead(BaseModel):
+    id: UUID
+    availability: str | None = None
+    desired_position: str | None = None
+    city: str | None = None
+    country: str | None = None
+    region: str | None = None
+    pretentions_salarial: str | None = None
+    candidate_id: UUID
+    contract_types: list[JobPreferencesContractTypeRead] = Field(default_factory=list)
+    sectors: list[JobPreferencesSectorLinkRead] = Field(default_factory=list)
+    created_at: datetime
+    updated_at: datetime | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class ApplicationRead(BaseModel):
+    id: UUID
+    cover_letter: str | None = None
+    resume_url: str | None = None
+    status: ApplicationStatus | None = None
+    candidate_id: UUID
+    job_offer_id: UUID
+    applied_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class SavedJobOfferRead(BaseModel):
+    id: UUID
+    candidate_id: UUID
+    job_offer_id: UUID
+    saved_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class CandidateRead(BaseModel):
+    id: UUID
+    created_at: datetime
+    updated_at: datetime | None = None
+    avatar_url: str | None = None
+    birth_date: datetime | None = None
+    completion_rate: float | None = None
+    cv_url: str | None = None
+    experience_level: ExperienceLevel | None = None
+    first_name: str | None = None
+    is_visible: bool | None = True
+    last_name: str | None = None
+    linked_in_url: str | None = None
+    city: str | None = None
+    country: str | None = None
+    region: str | None = None
+    motivation_letter_url: str | None = None
+    phone_number: str | None = None
+    portfolio_url: str | None = None
+    presentation: str | None = None
+    professional_title: str | None = None
+    school_level: SchoolLevel | None = None
+    user_id: UUID | None = None
+    job_preferences: JobPreferencesRead | None = None
+    educations: list[EducationRead] = Field(default_factory=list)
+    experiences: list[ExperienceRead] = Field(default_factory=list)
+    skills: list[SkillRead] = Field(default_factory=list)
+    languages: list[LanguageRead] = Field(default_factory=list)
+    applications: list[ApplicationRead] = Field(default_factory=list)
+    saved_job_offers: list[SavedJobOfferRead] = Field(default_factory=list)
+
+    class Config:
+        from_attributes = True
+
+
+class RecruiterRead(BaseModel):
+    id: UUID
+    created_at: datetime
+    updated_at: datetime | None = None
+    company_description: str | None = None
+    company_email: str | None = None
+    company_length: int | None = None
+    company_linked_in_url: str | None = None
+    company_logo_url: str | None = None
+    company_name: str | None = None
+    company_phone: str | None = None
+    company_website: str | None = None
+    first_name: str | None = None
+    function: str | None = None
+    last_name: str | None = None
+    city: str | None = None
+    country: str | None = None
+    region: str | None = None
+    phone_number: str | None = None
+    sector_id: UUID | None = None
+    user_id: UUID | None = None
+    sector: SectorRead | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class JobOfferBase(BaseModel):
+    contract_type: ContractType | None = None
+    description: str | None = None
+    experience_level: ExperienceLevel | None = None
+    expiration_date: datetime | None = None
+    is_featured: bool | None = None
+    is_urgent: bool | None = None
+    job_type: JobType | None = None
+    city: str | None = None
+    country: str | None = None
+    region: str | None = None
+    max_salary: float | None = None
+    min_salary: float | None = None
+    published_at: datetime | None = None
+    school_level: SchoolLevel | None = None
+    show_salary: bool | None = None
+    status: JobOfferStatus | None = None
+    title: str | None = None
+
+
+class JobOfferRead(JobOfferBase):
+    id: UUID
+    company_id: UUID
+    created_at: datetime
+    updated_at: datetime | None = None
+    recruiter: RecruiterRead | None = None
+    applications: list[ApplicationRead] = Field(default_factory=list)
+
+    class Config:
+        from_attributes = True
+
+
+class EmailOtpRead(BaseModel):
+    id: int
+    code: str
+    consumed: bool
+    email: EmailStr
+    expires_at: datetime
+    purpose: OtpPurpose
+    user_type: UserType | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class UserSessionRead(BaseModel):
+    id: UUID
+    device_info: str | None = None
+    expired_at: datetime | None = None
+    ip_address: str | None = None
+    is_active: bool | None = None
+    token: str | None = None
+    user_id: UUID | None = None
+    created_at: datetime
+    updated_at: datetime | None = None
 
     class Config:
         from_attributes = True

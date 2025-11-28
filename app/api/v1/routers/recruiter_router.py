@@ -7,9 +7,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.v1 import deps
-from app.schemas import OfferRead, OfferTemplateRead, RecruiterRead
+from app.schemas import JobOfferRead, RecruiterRead
 from app.services.offer_service import OfferService
-from app.services.offer_template_service import OfferTemplateService
 from app.services.recruiter_service import RecruiterService
 
 router = APIRouter()
@@ -36,24 +35,12 @@ def get_recruiter(
 
 
 @router.get(
-    "/recruiters/{recruiter_id}/modeles_offres",
-    response_model=list[OfferTemplateRead],
-    tags=["recruiters", "modeles_offres"],
-)
-def list_templates_for_recruiter(
-    recruiter_id: UUID,
-    db: Annotated[Session, Depends(deps.get_db)],
-) -> list[OfferTemplateRead]:
-    return OfferTemplateService(db).list_by_recruiter(recruiter_id)
-
-
-@router.get(
     "/recruiters/{recruiter_id}/offres",
-    response_model=list[OfferRead],
+    response_model=list[JobOfferRead],
     tags=["recruiters", "offres"],
 )
 def list_offers_for_recruiter(
     recruiter_id: UUID,
     db: Annotated[Session, Depends(deps.get_db)],
-) -> list[OfferRead]:
+) -> list[JobOfferRead]:
     return OfferService(db).list_by_recruiter(recruiter_id)

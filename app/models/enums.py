@@ -1,64 +1,91 @@
 from enum import Enum
 
 
-class Mobility(str, Enum):
-    ON_SITE = "on-site"
-    REMOTE = "remote"
-    HYBRID = "hybrid"
+class UserRole(str, Enum):
+    ADMIN = "ADMIN"
+    CANDIDATE = "CANDIDATE"
+    RECRUITER = "RECRUITER"
 
 
-class SeniorityLevel(str, Enum):
-    JUNIOR = "junior"
-    SENIOR = "senior"
+class UserType(str, Enum):
+    ADMIN = "ADMIN"
+    CANDIDATE = "CANDIDATE"
+    RECRUITER = "RECRUITER"
 
 
-class PositionType(str, Enum):
-    CDI = "cdi"
-    CDD = "cdd"
-    STAGE = "stage"
-    FREELANCE = "freelance"
-    ALTERNANCE = "alternance"
-    OTHER = "other"
+class Provider(str, Enum):
+    EMAIL = "EMAIL"
+    FACEBOOK = "FACEBOOK"
+    GOOGLE = "GOOGLE"
+    LINKEDIN = "LINKEDIN"
 
 
-class SalaryType(str, Enum):
-    AVERAGE = "average"
-    MIN = "min"
-    MAX = "max"
-    INTERVAL = "interval"
+class ApplicationStatus(str, Enum):
+    ACCEPTED = "ACCEPTED"
+    PENDING = "PENDING"
+    REJECTED = "REJECTED"
+    REVIEWED = "REVIEWED"
+    WITHDRAWN = "WITHDRAWN"
 
 
-class NotificationDelay(str, Enum):
-    DAY = "day"
-    WEEK = "week"
-    MONTH = "month"
+class ExperienceLevel(str, Enum):
+    ADVANCED = "ADVANCED"
+    BEGINNER = "BEGINNER"
+    EXPERT = "EXPERT"
+    INTERMEDIATE = "INTERMEDIATE"
+    JUNIOR = "JUNIOR"
+    SENIOR = "SENIOR"
 
 
-class RecommendationTarget(str, Enum):
-    CANDIDATE = "candidate"
-    RECRUITER = "recruiter"
+class SchoolLevel(str, Enum):
+    BAC = "BAC"
+    BTS = "BTS"
+    DEUG = "DEUG"
+    DOCTORAL = "DOCTORAL"
+    DUT = "DUT"
+    LICENCE = "LICENCE"
+    MASTER = "MASTER"
+    UNKNOWN = "UNKNOWN"
 
 
-class SearchType(str, Enum):
-    BOOLEAN = "boolean"
-    DEFAULT = "default"
+class ContractType(str, Enum):
+    ALTERNATIVE = "ALTERNATIVE"
+    CDD = "CDD"
+    CDI = "CDI"
+    FREELANCE = "FREELANCE"
+    INTERNSHIP = "INTERNSHIP"
 
 
-class SearchTarget(str, Enum):
-    OFFER = "offer"
-    CANDIDATE = "candidate"
+class JobType(str, Enum):
+    FULL_TIME = "FULL_TIME"
+    HYBRID = "HYBRID"
+    PART_TIME = "PART_TIME"
+    REMOTE = "REMOTE"
+
+
+class JobOfferStatus(str, Enum):
+    CLOSED = "CLOSED"
+    DELETED = "DELETED"
+    DRAFT = "DRAFT"
+    EXPIRED = "EXPIRED"
+    PUBLISHED = "PUBLISHED"
+
+
+class SkillLevel(str, Enum):
+    ADVANCED = "ADVANCED"
+    BEGINNER = "BEGINNER"
+    EXPERT = "EXPERT"
+    INTERMEDIATE = "INTERMEDIATE"
 
 
 class LanguageLevel(str, Enum):
-    A1 = "A1"
-    A2 = "A2"
-    B1 = "B1"
-    B2 = "B2"
-    C1 = "C1"
-    C2 = "C2"
+    ADVANCED = "ADVANCED"
+    BEGINNER = "BEGINNER"
+    BILINGUAL = "BILINGUAL"
+    INTERMEDIATE = "INTERMEDIATE"
+    NATIVE_LANGUAGE = "NATIVE_LANGUAGE"
 
 
-class UserRole(str, Enum):
-    CANDIDATE = "candidate"
-    RECRUITER = "recruiter"
-    ADMIN = "admin"
+class OtpPurpose(str, Enum):
+    LOGIN_REGISTER = "LOGIN_REGISTER"
+    PASSWORD_RESET = "PASSWORD_RESET"
