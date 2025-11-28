@@ -37,48 +37,35 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    created_at = Column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    deleted = Column(Boolean, nullable=False, default=False)
-    deleted_at = Column(DateTime(timezone=True))
-    email = Column(String(255), nullable=False, unique=True, index=True)
-    email_verified_at = Column(DateTime(timezone=True))
-    last_login = Column(DateTime(timezone=True))
+    created_at = Column(DateTime(timezone=False))
+    updated_at = Column(DateTime(timezone=False))
+    deleted = Column(Boolean, nullable=False)
+    deleted_at = Column(DateTime(timezone=False))
+    email = Column(String(255), nullable=False, unique=True)
+    email_verified_at = Column(DateTime(timezone=False))
     password = Column(String(255))
-    provider = Column(Enum(Provider, name="provider_enum"), nullable=False)
-    role = Column(Enum(UserRole, name="user_role_enum"), nullable=False)
-    user_type = Column(Enum(UserType, name="user_type_enum"))
+    provider = Column(String(255), nullable=False)
+    role = Column(String(255), nullable=False)
+    user_type = Column(String(255))
 
-    candidate = relationship(
-        "Candidate", back_populates="user", uselist=False, cascade="all, delete-orphan"
-    )
-    recruiter = relationship(
-        "Recruiter", back_populates="user", uselist=False, cascade="all, delete-orphan"
-    )
-    sessions = relationship(
-        "UserSession", back_populates="user", cascade="all, delete-orphan"
-    )
+    candidate = relationship("Candidate", back_populates="user", uselist=False)
+    recruiter = relationship("Recruiter", back_populates="user", uselist=False)
+    sessions = relationship("UserSession", back_populates="user")
 
 
 class Candidate(Base):
     __tablename__ = "candidates"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    created_at = Column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    created_at = Column(DateTime(timezone=False))
+    updated_at = Column(DateTime(timezone=False))
     avatar_url = Column(String(255))
-    birth_date = Column(DateTime(timezone=True))
+    birth_date = Column(DateTime(timezone=False))
     completion_rate = Column(Float)
     cv_url = Column(String(255))
-    experience_level = Column(
-        Enum(ExperienceLevel, name="candidate_experience_level_enum")
-    )
+    experience_level = Column(String(255))
     first_name = Column(String(255))
-    is_visible = Column(Boolean, default=True)
+    is_visible = Column(Boolean)
     last_name = Column(String(255))
     linked_in_url = Column(String(255))
     city = Column(String(255))
@@ -86,37 +73,21 @@ class Candidate(Base):
     region = Column(String(255))
     motivation_letter_url = Column(String(255))
     phone_number = Column(String(255))
+    pitch_mail = Column(String(2000))
     portfolio_url = Column(String(255))
     presentation = Column(String(255))
     professional_title = Column(String(255))
-    school_level = Column(Enum(SchoolLevel, name="candidate_school_level_enum"))
+    school_level = Column(String(255))
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
 
     user = relationship("User", back_populates="candidate")
-    educations = relationship(
-        "Education", back_populates="candidate", cascade="all, delete-orphan"
-    )
-    experiences = relationship(
-        "Experience", back_populates="candidate", cascade="all, delete-orphan"
-    )
-    skills = relationship(
-        "Skill", back_populates="candidate", cascade="all, delete-orphan"
-    )
-    languages = relationship(
-        "Language", back_populates="candidate", cascade="all, delete-orphan"
-    )
-    job_preferences = relationship(
-        "JobPreferences",
-        back_populates="candidate",
-        uselist=False,
-        cascade="all, delete-orphan",
-    )
-    applications = relationship(
-        "Application", back_populates="candidate", cascade="all, delete-orphan"
-    )
-    saved_job_offers = relationship(
-        "SavedJobOffer", back_populates="candidate", cascade="all, delete-orphan"
-    )
+    educations = relationship("Education", back_populates="candidate")
+    experiences = relationship("Experience", back_populates="candidate")
+    skills = relationship("Skill", back_populates="candidate")
+    languages = relationship("Language", back_populates="candidate")
+    job_preferences = relationship("JobPreferences", back_populates="candidate", uselist=False)
+    applications = relationship("Application", back_populates="candidate")
+    saved_job_offers = relationship("SavedJobOffer", back_populates="candidate")
 
 
 class Education(Base):

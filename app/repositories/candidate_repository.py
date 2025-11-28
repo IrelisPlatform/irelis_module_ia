@@ -19,12 +19,7 @@ class CandidateRepository:
             selectinload(Candidate.languages),
             selectinload(Candidate.educations),
             selectinload(Candidate.experiences),
-            selectinload(Candidate.job_preferences).options(
-                selectinload(JobPreferences.contract_types),
-                selectinload(JobPreferences.sectors).selectinload(
-                    JobPreferencesSector.sector
-                ),
-            ),
+            selectinload(Candidate.job_preferences),
             selectinload(Candidate.applications),
             selectinload(Candidate.saved_job_offers),
         )

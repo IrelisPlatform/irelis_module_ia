@@ -23,9 +23,9 @@ from app.models.enums import (
 
 class UserBase(BaseModel):
     email: EmailStr
-    role: UserRole
-    provider: Provider
-    user_type: UserType | None = None
+    role: str
+    provider: str
+    user_type: str | None = None
 
 
 class UserRead(UserBase):
@@ -35,7 +35,7 @@ class UserRead(UserBase):
     deleted: bool
     deleted_at: datetime | None = None
     email_verified_at: datetime | None = None
-    last_login: datetime | None = None
+    # last_login n'est pas dans la table users du dump, donc retiré
 
     class Config:
         from_attributes = True
@@ -175,9 +175,9 @@ class CandidateRead(BaseModel):
     birth_date: datetime | None = None
     completion_rate: float | None = None
     cv_url: str | None = None
-    experience_level: ExperienceLevel | None = None
+    experience_level: str | None = None
     first_name: str | None = None
-    is_visible: bool | None = True
+    is_visible: bool | None = None
     last_name: str | None = None
     linked_in_url: str | None = None
     city: str | None = None
@@ -185,10 +185,11 @@ class CandidateRead(BaseModel):
     region: str | None = None
     motivation_letter_url: str | None = None
     phone_number: str | None = None
+    pitch_mail: str | None = None
     portfolio_url: str | None = None
     presentation: str | None = None
     professional_title: str | None = None
-    school_level: SchoolLevel | None = None
+    school_level: str | None = None
     user_id: UUID | None = None
     job_preferences: JobPreferencesRead | None = None
     educations: list[EducationRead] = Field(default_factory=list)
