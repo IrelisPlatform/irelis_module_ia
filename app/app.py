@@ -34,4 +34,4 @@ def startup_event() -> None:
 
 @app.get("/health", tags=["health"])  # lightweight uptime probe
 async def health_check() -> dict[str, str]:
-    return {"status": "ok"}
+    return {"status": "Module IA is healthy"}
