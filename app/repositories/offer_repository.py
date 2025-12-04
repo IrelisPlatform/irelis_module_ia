@@ -17,6 +17,7 @@ class OfferRepository:
         return self.db.query(JobOffer).options(
             selectinload(JobOffer.recruiter),
             selectinload(JobOffer.applications),
+            selectinload(JobOffer.tags),
         )
 
     def list(self) -> list[JobOffer]:

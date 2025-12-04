@@ -18,6 +18,8 @@ from app.models.enums import (
     SkillLevel,
     UserRole,
     UserType,
+    SearchTarget,
+    SearchType,
 )
 
 
@@ -47,6 +49,34 @@ class SectorRead(BaseModel):
     description: str | None = None
     created_at: datetime
     updated_at: datetime | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class TagRead(BaseModel):
+    id: UUID
+    nom: str
+
+    class Config:
+        from_attributes = True
+
+
+class SearchRead(BaseModel):
+    id: UUID
+    query: str
+    type: SearchType
+    target: SearchTarget
+    country: str | None = None
+    city: str | None = None
+    town: str | None = None
+    type_contrat: str | None = None
+    niveau_etude: str | None = None
+    experience: str | None = None
+    language: str | None = None
+    date_publication: datetime | None = None
+    user_id: UUID
+    created_at: datetime
 
     class Config:
         from_attributes = True
@@ -257,6 +287,7 @@ class JobOfferRead(JobOfferBase):
     updated_at: datetime | None = None
     recruiter: RecruiterRead | None = None
     applications: list[ApplicationRead] = Field(default_factory=list)
+    tags: list[TagRead] = Field(default_factory=list)
 
     class Config:
         from_attributes = True
