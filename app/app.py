@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1.routers import candidate_router, offer_router, recruiter_router
+from app.api.v1.routers import candidate_router, offer_router, recruiter_router, search_router
 from app.db.init_db import init_db
 from app.db.session import SessionLocal
 
@@ -18,6 +18,7 @@ app.add_middleware(
 app.include_router(candidate_router.router, prefix="/api/v1/candidats")
 app.include_router(recruiter_router.router, prefix="/api/v1")
 app.include_router(offer_router.router, prefix="/api/v1")
+app.include_router(search_router.router, prefix="/api/v1")
 
 
 @app.on_event("startup")

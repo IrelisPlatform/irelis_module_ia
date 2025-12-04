@@ -82,6 +82,28 @@ class SearchRead(BaseModel):
         from_attributes = True
 
 
+class SearchBase(BaseModel):
+    query: str | None = None
+    type: SearchType | None = None
+    target: SearchTarget | None = None
+    country: str | None = None
+    city: str | None = None
+    town: str | None = None
+    type_contrat: ContractType | list[ContractType] | None = None
+    contract_type: ContractType | list[ContractType] | None = None
+    niveau_etude: SchoolLevel | None = None
+    school_level: SchoolLevel | None = None
+    experience: ExperienceLevel | None = None
+    experience_level: ExperienceLevel | None = None
+    language: str | None = None
+    date_publication: datetime | None = None
+    skills: list[str] | None = None
+
+
+class SearchCreate(SearchBase):
+    user_id: UUID | None = None
+
+
 class EducationRead(BaseModel):
     id: UUID
     city: str | None = None
