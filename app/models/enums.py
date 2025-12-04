@@ -89,3 +89,13 @@ class LanguageLevel(str, Enum):
 class OtpPurpose(str, Enum):
     LOGIN_REGISTER = "LOGIN_REGISTER"
     PASSWORD_RESET = "PASSWORD_RESET"
+
+
+class SearchType(str, Enum):
+    BOOL = "BOOL"
+    NOT = "NOT"
+
+
+class SearchTarget(str, Enum):
+    OFFRE = "OFFRE"
+    CANDIDAT = "CANDIDAT"

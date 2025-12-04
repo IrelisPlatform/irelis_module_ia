@@ -15,6 +15,9 @@ from .entities import (
     Skill,
     User,
     UserSession,
+    JobOfferTag,
+    Tag,
+    Search,
 )
 
 __all__ = [
@@ -34,4 +37,7 @@ __all__ = [
     "Skill",
     "User",
     "UserSession",
+    "JobOfferTag",
+    "Tag",
+    "Search",
 ]

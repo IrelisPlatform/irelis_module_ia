@@ -30,6 +30,8 @@ from app.models.enums import (
     SkillLevel,
     UserRole,
     UserType,
+    SearchTarget,
+    SearchType,
 )
 
 
@@ -51,6 +53,7 @@ class User(Base):
     candidate = relationship("Candidate", back_populates="user", uselist=False)
     recruiter = relationship("Recruiter", back_populates="user", uselist=False)
     sessions = relationship("UserSession", back_populates="user")
+    searches = relationship("Search", back_populates="user")
 
 
 class Candidate(Base):
@@ -315,6 +318,47 @@ class JobOffer(Base):
     saved_by = relationship(
         "SavedJobOffer", back_populates="job_offer", cascade="all, delete-orphan"
     )
+    tag_links = relationship(
+        "JobOfferTag",
+        back_populates="job_offer",
+        cascade="all, delete-orphan",
+    )
+    tags = relationship(
+        "Tag",
+        secondary="job_offer_tags",
+        back_populates="job_offers",
+        overlaps="tag_links",
+    )
+
+
+class JobOfferTag(Base):
+    __tablename__ = "job_offer_tags"
+
+    job_offer_id = Column(UUID(as_uuid=True), ForeignKey("job_offer.id"), primary_key=True)
+    tag_id = Column(UUID(as_uuid=True), ForeignKey("tag.id"), primary_key=True)
+
+    job_offer = relationship("JobOffer", back_populates="tag_links", overlaps="tags")
+    tag = relationship("Tag", back_populates="job_offer_links", overlaps="tags")
+
+
+class Tag(Base):
+    __tablename__ = "tag"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    nom = Column(String(255), nullable=False, unique=True)
+
+    job_offer_links = relationship(
+        "JobOfferTag",
+        back_populates="tag",
+        cascade="all, delete-orphan",
+        overlaps="tags",
+    )
+    job_offers = relationship(
+        "JobOffer",
+        secondary="job_offer_tags",
+        back_populates="tags",
+        overlaps="job_offer_links,tag,job_offer,tag_links",
+    )
 
 
 class Application(Base):
@@ -358,6 +402,27 @@ class SavedJobOffer(Base):
 
     candidate = relationship("Candidate", back_populates="saved_job_offers")
     job_offer = relationship("JobOffer", back_populates="saved_by")
+
+
+class Search(Base):
+    __tablename__ = "searches"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    query = Column(String(255), nullable=False)
+    type = Column(Enum(SearchType, name="search_type_enum"), nullable=False)
+    target = Column(Enum(SearchTarget, name="search_target_enum"), nullable=False)
+    country = Column(String(255))
+    city = Column(String(255))
+    town = Column(String(255))
+    type_contrat = Column(String(255))
+    niveau_etude = Column(String(255))
+    experience = Column(String(255))
+    language = Column(String(255))
+    date_publication = Column(DateTime(timezone=True))
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+
+    user = relationship("User", back_populates="searches")
 
 
 class EmailOtp(Base):

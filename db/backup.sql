@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict d7gYgDNRnyGkI1a2bkdc6J4dYVAR1tjHZF1eLkInf9anho3favxIbWtvFckOSkL
+\restrict 7zhDMSuMbbfrD6bctrwYgumbL0PD1uy2kv39KoGph2LW2VzEqnsH5cTIRCSRwf4
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.7 (Ubuntu 17.7-3.pgdg24.04+1)
@@ -423,6 +423,18 @@ CREATE TABLE public.job_offer (
 ALTER TABLE public.job_offer OWNER TO irelis;
 
 --
+-- Name: job_offer_tags; Type: TABLE; Schema: public; Owner: irelis
+--
+
+CREATE TABLE public.job_offer_tags (
+    job_offer_id uuid NOT NULL,
+    tag_id uuid NOT NULL
+);
+
+
+ALTER TABLE public.job_offer_tags OWNER TO irelis;
+
+--
 -- Name: job_preferences; Type: TABLE; Schema: public; Owner: irelis
 --
 
@@ -563,6 +575,18 @@ CREATE TABLE public.skill (
 ALTER TABLE public.skill OWNER TO irelis;
 
 --
+-- Name: tag; Type: TABLE; Schema: public; Owner: irelis
+--
+
+CREATE TABLE public.tag (
+    id uuid NOT NULL,
+    nom character varying(255) NOT NULL
+);
+
+
+ALTER TABLE public.tag OWNER TO irelis;
+
+--
 -- Name: user_sessions; Type: TABLE; Schema: public; Owner: irelis
 --
 
@@ -656,6 +680,14 @@ COPY public.job_offer (id, created_at, updated_at, contract_type, description, e
 
 
 --
+-- Data for Name: job_offer_tags; Type: TABLE DATA; Schema: public; Owner: irelis
+--
+
+COPY public.job_offer_tags (job_offer_id, tag_id) FROM stdin;
+\.
+
+
+--
 -- Data for Name: job_preferences; Type: TABLE DATA; Schema: public; Owner: irelis
 --
 
@@ -718,6 +750,14 @@ COPY public.sector (id, created_at, updated_at, description, name) FROM stdin;
 --
 
 COPY public.skill (id, created_at, updated_at, level, name, candidate_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: tag; Type: TABLE DATA; Schema: public; Owner: irelis
+--
+
+COPY public.tag (id, nom) FROM stdin;
 \.
 
 
@@ -803,6 +843,14 @@ ALTER TABLE ONLY public.job_offer
 
 
 --
+-- Name: job_offer_tags job_offer_tags_pkey; Type: CONSTRAINT; Schema: public; Owner: irelis
+--
+
+ALTER TABLE ONLY public.job_offer_tags
+    ADD CONSTRAINT job_offer_tags_pkey PRIMARY KEY (job_offer_id, tag_id);
+
+
+--
 -- Name: job_preferences job_preferences_pkey; Type: CONSTRAINT; Schema: public; Owner: irelis
 --
 
@@ -848,6 +896,22 @@ ALTER TABLE ONLY public.sector
 
 ALTER TABLE ONLY public.skill
     ADD CONSTRAINT skill_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: tag tag_nom_key; Type: CONSTRAINT; Schema: public; Owner: irelis
+--
+
+ALTER TABLE ONLY public.tag
+    ADD CONSTRAINT tag_nom_key UNIQUE (nom);
+
+
+--
+-- Name: tag tag_pkey; Type: CONSTRAINT; Schema: public; Owner: irelis
+--
+
+ALTER TABLE ONLY public.tag
+    ADD CONSTRAINT tag_pkey PRIMARY KEY (id);
 
 
 --
@@ -1050,8 +1114,24 @@ ALTER TABLE ONLY public.language
 
 
 --
+-- Name: job_offer_tags job_offer_tags_job_offer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: irelis
+--
+
+ALTER TABLE ONLY public.job_offer_tags
+    ADD CONSTRAINT job_offer_tags_job_offer_id_fkey FOREIGN KEY (job_offer_id) REFERENCES public.job_offer(id);
+
+
+--
+-- Name: job_offer_tags job_offer_tags_tag_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: irelis
+--
+
+ALTER TABLE ONLY public.job_offer_tags
+    ADD CONSTRAINT job_offer_tags_tag_id_fkey FOREIGN KEY (tag_id) REFERENCES public.tag(id);
+
+
+--
 -- PostgreSQL database dump complete
 --
 
-\unrestrict d7gYgDNRnyGkI1a2bkdc6J4dYVAR1tjHZF1eLkInf9anho3favxIbWtvFckOSkL
+\unrestrict 7zhDMSuMbbfrD6bctrwYgumbL0PD1uy2kv39KoGph2LW2VzEqnsH5cTIRCSRwf4
 
