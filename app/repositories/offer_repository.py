@@ -18,6 +18,8 @@ class OfferRepository:
             selectinload(JobOffer.recruiter),
             selectinload(JobOffer.applications),
             selectinload(JobOffer.tags),
+            selectinload(JobOffer.required_documents),
+            selectinload(JobOffer.candidature_info),
         )
 
     def list(self) -> list[JobOffer]:

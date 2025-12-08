@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 7zhDMSuMbbfrD6bctrwYgumbL0PD1uy2kv39KoGph2LW2VzEqnsH5cTIRCSRwf4
+\restrict 9w0xlgw9FHUVamaBb8voRXU18f20cjTniUyHjNH3JtRW1kt1D88fZpGW5vJf4jA
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.7 (Ubuntu 17.7-3.pgdg24.04+1)
@@ -216,6 +216,30 @@ CREATE TYPE public.provider_enum AS ENUM (
 ALTER TYPE public.provider_enum OWNER TO irelis;
 
 --
+-- Name: search_target_enum; Type: TYPE; Schema: public; Owner: irelis
+--
+
+CREATE TYPE public.search_target_enum AS ENUM (
+    'OFFRE',
+    'CANDIDAT'
+);
+
+
+ALTER TYPE public.search_target_enum OWNER TO irelis;
+
+--
+-- Name: search_type_enum; Type: TYPE; Schema: public; Owner: irelis
+--
+
+CREATE TYPE public.search_type_enum AS ENUM (
+    'BOOL',
+    'NOT'
+);
+
+
+ALTER TYPE public.search_type_enum OWNER TO irelis;
+
+--
 -- Name: skill_level_enum; Type: TYPE; Schema: public; Owner: irelis
 --
 
@@ -260,19 +284,35 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
+-- Name: application_document; Type: TABLE; Schema: public; Owner: irelis
+--
+
+CREATE TABLE public.application_document (
+    created_at timestamp(6) without time zone,
+    updated_at timestamp(6) without time zone,
+    application_id uuid,
+    id uuid NOT NULL,
+    storage_url character varying(255),
+    type character varying(255),
+    CONSTRAINT application_document_type_check CHECK (((type)::text = ANY ((ARRAY['CV'::character varying, 'COVER_LETTER'::character varying, 'PORTFOLIO'::character varying, 'CERTIFICATE'::character varying, 'IDENTITY_DOC'::character varying])::text[])))
+);
+
+
+ALTER TABLE public.application_document OWNER TO irelis;
+
+--
 -- Name: applications; Type: TABLE; Schema: public; Owner: irelis
 --
 
 CREATE TABLE public.applications (
-    id uuid NOT NULL,
+    applied_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone,
     updated_at timestamp(6) without time zone,
-    applied_at timestamp(6) without time zone,
-    cover_letter character varying(255),
-    resume_url character varying(255),
-    status character varying(255),
     candidate_id uuid NOT NULL,
+    id uuid NOT NULL,
     job_offer_id uuid NOT NULL,
+    message character varying(255),
+    status character varying(255),
     CONSTRAINT applications_status_check CHECK (((status)::text = ANY ((ARRAY['PENDING'::character varying, 'REVIEWED'::character varying, 'ACCEPTED'::character varying, 'REJECTED'::character varying, 'WITHDRAWN'::character varying])::text[])))
 );
 
@@ -284,29 +324,32 @@ ALTER TABLE public.applications OWNER TO irelis;
 --
 
 CREATE TABLE public.candidates (
-    id uuid NOT NULL,
+    completion_rate double precision,
+    is_visible boolean,
+    last_viewed_month date,
+    monthly_profile_views integer,
+    profile_views integer,
+    birth_date timestamp(6) without time zone,
     created_at timestamp(6) without time zone,
     updated_at timestamp(6) without time zone,
+    id uuid NOT NULL,
+    user_id uuid,
+    pitch_mail character varying(2000),
     avatar_url character varying(255),
-    birth_date timestamp(6) without time zone,
-    completion_rate double precision,
+    city character varying(255),
+    country character varying(255),
     cv_url character varying(255),
     experience_level character varying(255),
     first_name character varying(255),
-    is_visible boolean,
     last_name character varying(255),
     linked_in_url character varying(255),
-    city character varying(255),
-    country character varying(255),
-    region character varying(255),
     motivation_letter_url character varying(255),
     phone_number character varying(255),
-    pitch_mail character varying(2000),
     portfolio_url character varying(255),
     presentation character varying(255),
     professional_title character varying(255),
+    region character varying(255),
     school_level character varying(255),
-    user_id uuid,
     CONSTRAINT candidates_experience_level_check CHECK (((experience_level)::text = ANY ((ARRAY['BEGINNER'::character varying, 'JUNIOR'::character varying, 'INTERMEDIATE'::character varying, 'ADVANCED'::character varying, 'SENIOR'::character varying, 'EXPERT'::character varying])::text[]))),
     CONSTRAINT candidates_school_level_check CHECK (((school_level)::text = ANY ((ARRAY['BAC'::character varying, 'DEUG'::character varying, 'BTS'::character varying, 'DUT'::character varying, 'LICENCE'::character varying, 'MASTER'::character varying, 'DOCTORAL'::character varying, 'UNKNOWN'::character varying])::text[])))
 );
@@ -315,18 +358,36 @@ CREATE TABLE public.candidates (
 ALTER TABLE public.candidates OWNER TO irelis;
 
 --
+-- Name: candidature_info; Type: TABLE; Schema: public; Owner: irelis
+--
+
+CREATE TABLE public.candidature_info (
+    created_at timestamp(6) without time zone,
+    updated_at timestamp(6) without time zone,
+    id uuid NOT NULL,
+    job_offer_id uuid NOT NULL,
+    email_candidature character varying(255),
+    instructions character varying(255),
+    required_documents character varying(255),
+    url_candidature character varying(255)
+);
+
+
+ALTER TABLE public.candidature_info OWNER TO irelis;
+
+--
 -- Name: education; Type: TABLE; Schema: public; Owner: irelis
 --
 
 CREATE TABLE public.education (
-    id uuid NOT NULL,
+    graduation_year integer,
     created_at timestamp(6) without time zone,
     updated_at timestamp(6) without time zone,
+    candidate_id uuid NOT NULL,
+    id uuid NOT NULL,
     city character varying(255),
     degree character varying(255),
-    graduation_year integer,
-    institution character varying(255),
-    candidate_id uuid NOT NULL
+    institution character varying(255)
 );
 
 
@@ -337,11 +398,11 @@ ALTER TABLE public.education OWNER TO irelis;
 --
 
 CREATE TABLE public.email_otp (
+    consumed boolean NOT NULL,
+    expires_at timestamp(6) with time zone NOT NULL,
     id bigint NOT NULL,
     code character varying(255) NOT NULL,
-    consumed boolean NOT NULL,
     email character varying(255) NOT NULL,
-    expires_at timestamp(6) with time zone NOT NULL,
     purpose character varying(255) NOT NULL,
     user_type character varying(255),
     CONSTRAINT email_otp_purpose_check CHECK (((purpose)::text = ANY ((ARRAY['LOGIN_REGISTER'::character varying, 'PASSWORD_RESET'::character varying, 'OAUTH2'::character varying])::text[]))),
@@ -370,17 +431,17 @@ ALTER TABLE public.email_otp ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTIT
 --
 
 CREATE TABLE public.experience (
-    id uuid NOT NULL,
+    is_current boolean,
     created_at timestamp(6) without time zone,
+    end_date timestamp(6) without time zone,
+    start_date timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone,
+    candidate_id uuid NOT NULL,
+    id uuid NOT NULL,
     city character varying(255),
     company_name character varying(255),
     description character varying(255),
-    end_date timestamp(6) without time zone,
-    is_current boolean,
-    "position" character varying(255),
-    start_date timestamp(6) without time zone NOT NULL,
-    candidate_id uuid NOT NULL
+    "position" character varying(255)
 );
 
 
@@ -391,32 +452,31 @@ ALTER TABLE public.experience OWNER TO irelis;
 --
 
 CREATE TABLE public.job_offer (
-    id uuid NOT NULL,
-    created_at timestamp(6) without time zone,
-    updated_at timestamp(6) without time zone,
-    contract_type character varying(255),
-    description character varying(255),
-    experience_level character varying(255),
-    expiration_date timestamp(6) without time zone,
     is_featured boolean,
     is_urgent boolean,
-    job_type character varying(255),
-    city character varying(255),
-    country character varying(255),
-    region character varying(255),
-    max_salary double precision,
-    min_salary double precision,
+    post_number integer,
+    created_at timestamp(6) without time zone,
+    expiration_date timestamp(6) without time zone,
     published_at timestamp(6) without time zone,
-    school_level character varying(255),
-    show_salary boolean,
+    updated_at timestamp(6) without time zone,
+    company_id uuid NOT NULL,
+    id uuid NOT NULL,
+    contract_type character varying(255),
+    description character varying(255),
+    instructions character varying(255),
+    job_type character varying(255),
+    required_language character varying(255),
+    salary character varying(255),
     status character varying(255),
     title character varying(255),
-    company_id uuid NOT NULL,
+    work_city_location character varying(255),
+    work_country_location character varying(255),
+    benefits oid,
+    requirements oid,
+    responsibilities oid,
     CONSTRAINT job_offer_contract_type_check CHECK (((contract_type)::text = ANY ((ARRAY['CDI'::character varying, 'CDD'::character varying, 'INTERNSHIP'::character varying, 'ALTERNATIVE'::character varying, 'FREELANCE'::character varying])::text[]))),
-    CONSTRAINT job_offer_experience_level_check CHECK (((experience_level)::text = ANY ((ARRAY['BEGINNER'::character varying, 'JUNIOR'::character varying, 'INTERMEDIATE'::character varying, 'ADVANCED'::character varying, 'SENIOR'::character varying, 'EXPERT'::character varying])::text[]))),
     CONSTRAINT job_offer_job_type_check CHECK (((job_type)::text = ANY ((ARRAY['FULL_TIME'::character varying, 'PART_TIME'::character varying, 'REMOTE'::character varying, 'HYBRID'::character varying])::text[]))),
-    CONSTRAINT job_offer_school_level_check CHECK (((school_level)::text = ANY ((ARRAY['BAC'::character varying, 'DEUG'::character varying, 'BTS'::character varying, 'DUT'::character varying, 'LICENCE'::character varying, 'MASTER'::character varying, 'DOCTORAL'::character varying, 'UNKNOWN'::character varying])::text[]))),
-    CONSTRAINT job_offer_status_check CHECK (((status)::text = ANY ((ARRAY['DRAFT'::character varying, 'PUBLISHED'::character varying, 'EXPIRED'::character varying, 'CLOSED'::character varying, 'DELETED'::character varying])::text[])))
+    CONSTRAINT job_offer_status_check CHECK (((status)::text = ANY ((ARRAY['PENDING'::character varying, 'PUBLISHED'::character varying, 'EXPIRED'::character varying, 'CLOSED'::character varying])::text[])))
 );
 
 
@@ -439,16 +499,16 @@ ALTER TABLE public.job_offer_tags OWNER TO irelis;
 --
 
 CREATE TABLE public.job_preferences (
-    id uuid NOT NULL,
     created_at timestamp(6) without time zone,
     updated_at timestamp(6) without time zone,
+    candidate_id uuid NOT NULL,
+    id uuid NOT NULL,
     availability character varying(255),
-    desired_position character varying(255),
     city character varying(255),
     country character varying(255),
-    region character varying(255),
+    desired_position character varying(255),
     pretentions_salarial character varying(255),
-    candidate_id uuid NOT NULL
+    region character varying(255)
 );
 
 
@@ -484,12 +544,12 @@ ALTER TABLE public.job_preferences_sectors OWNER TO irelis;
 --
 
 CREATE TABLE public.language (
-    id uuid NOT NULL,
     created_at timestamp(6) without time zone,
     updated_at timestamp(6) without time zone,
+    candidate_id uuid NOT NULL,
+    id uuid NOT NULL,
     language character varying(255),
     level character varying(255),
-    candidate_id uuid NOT NULL,
     CONSTRAINT language_level_check CHECK (((level)::text = ANY ((ARRAY['BEGINNER'::character varying, 'INTERMEDIATE'::character varying, 'ADVANCED'::character varying, 'BILINGUAL'::character varying, 'NATIVE_LANGUAGE'::character varying])::text[])))
 );
 
@@ -501,41 +561,56 @@ ALTER TABLE public.language OWNER TO irelis;
 --
 
 CREATE TABLE public.recruiters (
-    id uuid NOT NULL,
+    company_length integer,
     created_at timestamp(6) without time zone,
     updated_at timestamp(6) without time zone,
+    id uuid NOT NULL,
+    sector_id uuid,
+    user_id uuid,
+    city character varying(255),
     company_description character varying(255),
     company_email character varying(255),
-    company_length integer,
     company_linked_in_url character varying(255),
     company_logo_url character varying(255),
     company_name character varying(255),
     company_phone character varying(255),
     company_website character varying(255),
+    country character varying(255),
     first_name character varying(255),
     function character varying(255),
     last_name character varying(255),
-    city character varying(255),
-    country character varying(255),
-    region character varying(255),
     phone_number character varying(255),
-    sector_id uuid,
-    user_id uuid
+    region character varying(255)
 );
 
 
 ALTER TABLE public.recruiters OWNER TO irelis;
 
 --
+-- Name: required_documents; Type: TABLE; Schema: public; Owner: irelis
+--
+
+CREATE TABLE public.required_documents (
+    created_at timestamp(6) without time zone,
+    updated_at timestamp(6) without time zone,
+    id uuid NOT NULL,
+    job_offer_id uuid,
+    type character varying(255),
+    CONSTRAINT required_documents_type_check CHECK (((type)::text = ANY ((ARRAY['CV'::character varying, 'COVER_LETTER'::character varying, 'PORTFOLIO'::character varying, 'CERTIFICATE'::character varying, 'IDENTITY_DOC'::character varying])::text[])))
+);
+
+
+ALTER TABLE public.required_documents OWNER TO irelis;
+
+--
 -- Name: saved_job_offers; Type: TABLE; Schema: public; Owner: irelis
 --
 
 CREATE TABLE public.saved_job_offers (
-    id uuid NOT NULL,
     created_at timestamp(6) without time zone,
     updated_at timestamp(6) without time zone,
-    saved_at timestamp(6) without time zone,
     candidate_id uuid NOT NULL,
+    id uuid NOT NULL,
     job_offer_id uuid NOT NULL
 );
 
@@ -543,13 +618,37 @@ CREATE TABLE public.saved_job_offers (
 ALTER TABLE public.saved_job_offers OWNER TO irelis;
 
 --
+-- Name: searches; Type: TABLE; Schema: public; Owner: irelis
+--
+
+CREATE TABLE public.searches (
+    id uuid NOT NULL,
+    query character varying(255) NOT NULL,
+    type public.search_type_enum NOT NULL,
+    target public.search_target_enum NOT NULL,
+    country character varying(255),
+    city character varying(255),
+    town character varying(255),
+    type_contrat character varying(255),
+    niveau_etude character varying(255),
+    experience character varying(255),
+    language character varying(255),
+    date_publication timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    user_id uuid NOT NULL
+);
+
+
+ALTER TABLE public.searches OWNER TO irelis;
+
+--
 -- Name: sector; Type: TABLE; Schema: public; Owner: irelis
 --
 
 CREATE TABLE public.sector (
-    id uuid NOT NULL,
     created_at timestamp(6) without time zone,
     updated_at timestamp(6) without time zone,
+    id uuid NOT NULL,
     description character varying(255),
     name character varying(255)
 );
@@ -562,12 +661,12 @@ ALTER TABLE public.sector OWNER TO irelis;
 --
 
 CREATE TABLE public.skill (
-    id uuid NOT NULL,
     created_at timestamp(6) without time zone,
     updated_at timestamp(6) without time zone,
+    candidate_id uuid NOT NULL,
+    id uuid NOT NULL,
     level character varying(255),
     name character varying(255),
-    candidate_id uuid NOT NULL,
     CONSTRAINT skill_level_check CHECK (((level)::text = ANY ((ARRAY['BEGINNER'::character varying, 'INTERMEDIATE'::character varying, 'ADVANCED'::character varying, 'EXPERT'::character varying])::text[])))
 );
 
@@ -579,8 +678,11 @@ ALTER TABLE public.skill OWNER TO irelis;
 --
 
 CREATE TABLE public.tag (
+    created_at timestamp(6) without time zone,
+    updated_at timestamp(6) without time zone,
     id uuid NOT NULL,
-    nom character varying(255) NOT NULL
+    name character varying(255),
+    type character varying(255)
 );
 
 
@@ -591,15 +693,15 @@ ALTER TABLE public.tag OWNER TO irelis;
 --
 
 CREATE TABLE public.user_sessions (
-    id uuid NOT NULL,
-    created_at timestamp(6) without time zone,
-    updated_at timestamp(6) without time zone,
-    device_info character varying(255),
-    expired_at timestamp(6) without time zone,
-    ip_address character varying(255),
     is_active boolean,
-    token character varying(255),
-    user_id uuid
+    created_at timestamp(6) without time zone,
+    expired_at timestamp(6) without time zone,
+    updated_at timestamp(6) without time zone,
+    id uuid NOT NULL,
+    user_id uuid,
+    device_info character varying(255),
+    ip_address character varying(255),
+    token character varying(255)
 );
 
 
@@ -610,13 +712,13 @@ ALTER TABLE public.user_sessions OWNER TO irelis;
 --
 
 CREATE TABLE public.users (
-    id uuid NOT NULL,
-    created_at timestamp(6) without time zone,
-    updated_at timestamp(6) without time zone,
     deleted boolean NOT NULL,
+    created_at timestamp(6) without time zone,
     deleted_at timestamp(6) without time zone,
-    email character varying(255) NOT NULL,
     email_verified_at timestamp(6) without time zone,
+    updated_at timestamp(6) without time zone,
+    id uuid NOT NULL,
+    email character varying(255) NOT NULL,
     password character varying(255),
     provider character varying(255) NOT NULL,
     role character varying(255) NOT NULL,
@@ -630,10 +732,18 @@ CREATE TABLE public.users (
 ALTER TABLE public.users OWNER TO irelis;
 
 --
+-- Data for Name: application_document; Type: TABLE DATA; Schema: public; Owner: irelis
+--
+
+COPY public.application_document (created_at, updated_at, application_id, id, storage_url, type) FROM stdin;
+\.
+
+
+--
 -- Data for Name: applications; Type: TABLE DATA; Schema: public; Owner: irelis
 --
 
-COPY public.applications (id, created_at, updated_at, applied_at, cover_letter, resume_url, status, candidate_id, job_offer_id) FROM stdin;
+COPY public.applications (applied_at, created_at, updated_at, candidate_id, id, job_offer_id, message, status) FROM stdin;
 \.
 
 
@@ -641,8 +751,15 @@ COPY public.applications (id, created_at, updated_at, applied_at, cover_letter, 
 -- Data for Name: candidates; Type: TABLE DATA; Schema: public; Owner: irelis
 --
 
-COPY public.candidates (id, created_at, updated_at, avatar_url, birth_date, completion_rate, cv_url, experience_level, first_name, is_visible, last_name, linked_in_url, city, country, region, motivation_letter_url, phone_number, pitch_mail, portfolio_url, presentation, professional_title, school_level, user_id) FROM stdin;
-daaf0ae7-669e-40ab-ac98-4ec134b15d4a	2025-11-27 22:59:43.684998	2025-11-27 22:59:43.685025	\N	\N	\N	\N	\N	\N	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	40078e0c-0ad4-4124-9d4c-8564b244ffcc
+COPY public.candidates (completion_rate, is_visible, last_viewed_month, monthly_profile_views, profile_views, birth_date, created_at, updated_at, id, user_id, pitch_mail, avatar_url, city, country, cv_url, experience_level, first_name, last_name, linked_in_url, motivation_letter_url, phone_number, portfolio_url, presentation, professional_title, region, school_level) FROM stdin;
+\.
+
+
+--
+-- Data for Name: candidature_info; Type: TABLE DATA; Schema: public; Owner: irelis
+--
+
+COPY public.candidature_info (created_at, updated_at, id, job_offer_id, email_candidature, instructions, required_documents, url_candidature) FROM stdin;
 \.
 
 
@@ -650,7 +767,7 @@ daaf0ae7-669e-40ab-ac98-4ec134b15d4a	2025-11-27 22:59:43.684998	2025-11-27 22:59
 -- Data for Name: education; Type: TABLE DATA; Schema: public; Owner: irelis
 --
 
-COPY public.education (id, created_at, updated_at, city, degree, graduation_year, institution, candidate_id) FROM stdin;
+COPY public.education (graduation_year, created_at, updated_at, candidate_id, id, city, degree, institution) FROM stdin;
 \.
 
 
@@ -658,8 +775,7 @@ COPY public.education (id, created_at, updated_at, city, degree, graduation_year
 -- Data for Name: email_otp; Type: TABLE DATA; Schema: public; Owner: irelis
 --
 
-COPY public.email_otp (id, code, consumed, email, expires_at, purpose, user_type) FROM stdin;
-1	668535	t	averelldalton2504@gmail.com	2025-11-27 23:07:54.973848+00	LOGIN_REGISTER	CANDIDATE
+COPY public.email_otp (consumed, expires_at, id, code, email, purpose, user_type) FROM stdin;
 \.
 
 
@@ -667,7 +783,7 @@ COPY public.email_otp (id, code, consumed, email, expires_at, purpose, user_type
 -- Data for Name: experience; Type: TABLE DATA; Schema: public; Owner: irelis
 --
 
-COPY public.experience (id, created_at, updated_at, city, company_name, description, end_date, is_current, "position", start_date, candidate_id) FROM stdin;
+COPY public.experience (is_current, created_at, end_date, start_date, updated_at, candidate_id, id, city, company_name, description, "position") FROM stdin;
 \.
 
 
@@ -675,7 +791,7 @@ COPY public.experience (id, created_at, updated_at, city, company_name, descript
 -- Data for Name: job_offer; Type: TABLE DATA; Schema: public; Owner: irelis
 --
 
-COPY public.job_offer (id, created_at, updated_at, contract_type, description, experience_level, expiration_date, is_featured, is_urgent, job_type, city, country, region, max_salary, min_salary, published_at, school_level, show_salary, status, title, company_id) FROM stdin;
+COPY public.job_offer (is_featured, is_urgent, post_number, created_at, expiration_date, published_at, updated_at, company_id, id, contract_type, description, instructions, job_type, required_language, salary, status, title, work_city_location, work_country_location, benefits, requirements, responsibilities) FROM stdin;
 \.
 
 
@@ -691,7 +807,7 @@ COPY public.job_offer_tags (job_offer_id, tag_id) FROM stdin;
 -- Data for Name: job_preferences; Type: TABLE DATA; Schema: public; Owner: irelis
 --
 
-COPY public.job_preferences (id, created_at, updated_at, availability, desired_position, city, country, region, pretentions_salarial, candidate_id) FROM stdin;
+COPY public.job_preferences (created_at, updated_at, candidate_id, id, availability, city, country, desired_position, pretentions_salarial, region) FROM stdin;
 \.
 
 
@@ -715,7 +831,7 @@ COPY public.job_preferences_sectors (job_preferences_id, sector_id) FROM stdin;
 -- Data for Name: language; Type: TABLE DATA; Schema: public; Owner: irelis
 --
 
-COPY public.language (id, created_at, updated_at, language, level, candidate_id) FROM stdin;
+COPY public.language (created_at, updated_at, candidate_id, id, language, level) FROM stdin;
 \.
 
 
@@ -723,7 +839,15 @@ COPY public.language (id, created_at, updated_at, language, level, candidate_id)
 -- Data for Name: recruiters; Type: TABLE DATA; Schema: public; Owner: irelis
 --
 
-COPY public.recruiters (id, created_at, updated_at, company_description, company_email, company_length, company_linked_in_url, company_logo_url, company_name, company_phone, company_website, first_name, function, last_name, city, country, region, phone_number, sector_id, user_id) FROM stdin;
+COPY public.recruiters (company_length, created_at, updated_at, id, sector_id, user_id, city, company_description, company_email, company_linked_in_url, company_logo_url, company_name, company_phone, company_website, country, first_name, function, last_name, phone_number, region) FROM stdin;
+\.
+
+
+--
+-- Data for Name: required_documents; Type: TABLE DATA; Schema: public; Owner: irelis
+--
+
+COPY public.required_documents (created_at, updated_at, id, job_offer_id, type) FROM stdin;
 \.
 
 
@@ -731,7 +855,15 @@ COPY public.recruiters (id, created_at, updated_at, company_description, company
 -- Data for Name: saved_job_offers; Type: TABLE DATA; Schema: public; Owner: irelis
 --
 
-COPY public.saved_job_offers (id, created_at, updated_at, saved_at, candidate_id, job_offer_id) FROM stdin;
+COPY public.saved_job_offers (created_at, updated_at, candidate_id, id, job_offer_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: searches; Type: TABLE DATA; Schema: public; Owner: irelis
+--
+
+COPY public.searches (id, query, type, target, country, city, town, type_contrat, niveau_etude, experience, language, date_publication, created_at, user_id) FROM stdin;
 \.
 
 
@@ -739,9 +871,9 @@ COPY public.saved_job_offers (id, created_at, updated_at, saved_at, candidate_id
 -- Data for Name: sector; Type: TABLE DATA; Schema: public; Owner: irelis
 --
 
-COPY public.sector (id, created_at, updated_at, description, name) FROM stdin;
-2dc648ee-c01f-4584-9662-1a85783e34a9	2025-11-27 23:23:05.084829	2025-11-27 23:23:05.084875	\N	IT
-1acc5355-ef25-45ed-92c9-20499c396ee3	2025-11-27 23:23:05.297261	2025-11-27 23:23:05.297316	\N	Marketing
+COPY public.sector (created_at, updated_at, id, description, name) FROM stdin;
+2025-12-08 10:52:13.039894	2025-12-08 10:52:13.039972	da601c62-f366-4e52-b4b1-3cb5cd4deb03	\N	IT
+2025-12-08 10:52:13.058831	2025-12-08 10:52:13.058877	7cf6f16c-6248-4fb1-a2e0-c2a94b520740	\N	Marketing
 \.
 
 
@@ -749,7 +881,7 @@ COPY public.sector (id, created_at, updated_at, description, name) FROM stdin;
 -- Data for Name: skill; Type: TABLE DATA; Schema: public; Owner: irelis
 --
 
-COPY public.skill (id, created_at, updated_at, level, name, candidate_id) FROM stdin;
+COPY public.skill (created_at, updated_at, candidate_id, id, level, name) FROM stdin;
 \.
 
 
@@ -757,7 +889,14 @@ COPY public.skill (id, created_at, updated_at, level, name, candidate_id) FROM s
 -- Data for Name: tag; Type: TABLE DATA; Schema: public; Owner: irelis
 --
 
-COPY public.tag (id, nom) FROM stdin;
+COPY public.tag (created_at, updated_at, id, name, type) FROM stdin;
+2025-12-08 10:52:13.088996	2025-12-08 10:52:13.089038	aa1cc550-561f-418f-bd4d-26d707c04953	Java	SKILL
+2025-12-08 10:52:13.091833	2025-12-08 10:52:13.091875	b2af8b66-47b1-432a-8ed1-d71087ada5e4	Spring Boot	SKILL
+2025-12-08 10:52:13.093774	2025-12-08 10:52:13.093817	2f5f8e2c-bab6-4a3e-b64a-8d5f40fcec63	Marketing Digital	SKILL
+2025-12-08 10:52:13.096324	2025-12-08 10:52:13.09636	199101e7-e903-4a4f-898c-926ca05200f6	Remote	WORK_STYLE
+2025-12-08 10:52:13.098144	2025-12-08 10:52:13.098177	624d2797-0dd5-4430-a426-d90d59c34f3a	Full-time	WORK_STYLE
+2025-12-08 10:52:13.100484	2025-12-08 10:52:13.100519	2fd89c75-c8d1-47c4-ad0d-b006ff5bf5b1	Urgent	PRIORITY
+2025-12-08 10:52:13.101877	2025-12-08 10:52:13.101904	4071bd88-7391-48ad-9ab0-f3737526acb6	Featured	PRIORITY
 \.
 
 
@@ -765,8 +904,7 @@ COPY public.tag (id, nom) FROM stdin;
 -- Data for Name: user_sessions; Type: TABLE DATA; Schema: public; Owner: irelis
 --
 
-COPY public.user_sessions (id, created_at, updated_at, device_info, expired_at, ip_address, is_active, token, user_id) FROM stdin;
-746435b4-a871-47dd-90ad-4cc8201c728c	2025-11-27 22:59:43.691086	2025-11-27 22:59:43.691103	bruno-runtime/2.14.2	2025-11-27 23:59:43.665884	127.0.0.1	t	eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhdmVyZWxsZGFsdG9uMjUwNEBnbWFpbC5jb20iLCJyb2xlIjpbIkNBTkRJREFURSJdLCJpYXQiOjE3NjQyODQzODMsImV4cCI6MTc2NDM3MDc4M30.4EssJwGsxhWHXmtYyR6B0h91ofLJZKCKnIiaBHMk1KE	40078e0c-0ad4-4124-9d4c-8564b244ffcc
+COPY public.user_sessions (is_active, created_at, expired_at, updated_at, id, user_id, device_info, ip_address, token) FROM stdin;
 \.
 
 
@@ -774,8 +912,7 @@ COPY public.user_sessions (id, created_at, updated_at, device_info, expired_at, 
 -- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: irelis
 --
 
-COPY public.users (id, created_at, updated_at, deleted, deleted_at, email, email_verified_at, password, provider, role, user_type) FROM stdin;
-40078e0c-0ad4-4124-9d4c-8564b244ffcc	2025-11-27 22:59:43.675083	2025-11-27 22:59:43.675116	f	\N	averelldalton2504@gmail.com	\N	\N	EMAIL	CANDIDATE	CANDIDATE
+COPY public.users (deleted, created_at, deleted_at, email_verified_at, updated_at, id, email, password, provider, role, user_type) FROM stdin;
 \.
 
 
@@ -783,7 +920,23 @@ COPY public.users (id, created_at, updated_at, deleted, deleted_at, email, email
 -- Name: email_otp_id_seq; Type: SEQUENCE SET; Schema: public; Owner: irelis
 --
 
-SELECT pg_catalog.setval('public.email_otp_id_seq', 1, true);
+SELECT pg_catalog.setval('public.email_otp_id_seq', 1, false);
+
+
+--
+-- Name: application_document application_document_pkey; Type: CONSTRAINT; Schema: public; Owner: irelis
+--
+
+ALTER TABLE ONLY public.application_document
+    ADD CONSTRAINT application_document_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: applications applications_candidate_id_job_offer_id_key; Type: CONSTRAINT; Schema: public; Owner: irelis
+--
+
+ALTER TABLE ONLY public.applications
+    ADD CONSTRAINT applications_candidate_id_job_offer_id_key UNIQUE (candidate_id, job_offer_id);
 
 
 --
@@ -800,6 +953,30 @@ ALTER TABLE ONLY public.applications
 
 ALTER TABLE ONLY public.candidates
     ADD CONSTRAINT candidates_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: candidates candidates_user_id_key; Type: CONSTRAINT; Schema: public; Owner: irelis
+--
+
+ALTER TABLE ONLY public.candidates
+    ADD CONSTRAINT candidates_user_id_key UNIQUE (user_id);
+
+
+--
+-- Name: candidature_info candidature_info_job_offer_id_key; Type: CONSTRAINT; Schema: public; Owner: irelis
+--
+
+ALTER TABLE ONLY public.candidature_info
+    ADD CONSTRAINT candidature_info_job_offer_id_key UNIQUE (job_offer_id);
+
+
+--
+-- Name: candidature_info candidature_info_pkey; Type: CONSTRAINT; Schema: public; Owner: irelis
+--
+
+ALTER TABLE ONLY public.candidature_info
+    ADD CONSTRAINT candidature_info_pkey PRIMARY KEY (id);
 
 
 --
@@ -851,6 +1028,14 @@ ALTER TABLE ONLY public.job_offer_tags
 
 
 --
+-- Name: job_preferences job_preferences_candidate_id_key; Type: CONSTRAINT; Schema: public; Owner: irelis
+--
+
+ALTER TABLE ONLY public.job_preferences
+    ADD CONSTRAINT job_preferences_candidate_id_key UNIQUE (candidate_id);
+
+
+--
 -- Name: job_preferences job_preferences_pkey; Type: CONSTRAINT; Schema: public; Owner: irelis
 --
 
@@ -875,11 +1060,43 @@ ALTER TABLE ONLY public.recruiters
 
 
 --
+-- Name: recruiters recruiters_user_id_key; Type: CONSTRAINT; Schema: public; Owner: irelis
+--
+
+ALTER TABLE ONLY public.recruiters
+    ADD CONSTRAINT recruiters_user_id_key UNIQUE (user_id);
+
+
+--
+-- Name: required_documents required_documents_pkey; Type: CONSTRAINT; Schema: public; Owner: irelis
+--
+
+ALTER TABLE ONLY public.required_documents
+    ADD CONSTRAINT required_documents_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: saved_job_offers saved_job_offers_candidate_id_job_offer_id_key; Type: CONSTRAINT; Schema: public; Owner: irelis
+--
+
+ALTER TABLE ONLY public.saved_job_offers
+    ADD CONSTRAINT saved_job_offers_candidate_id_job_offer_id_key UNIQUE (candidate_id, job_offer_id);
+
+
+--
 -- Name: saved_job_offers saved_job_offers_pkey; Type: CONSTRAINT; Schema: public; Owner: irelis
 --
 
 ALTER TABLE ONLY public.saved_job_offers
     ADD CONSTRAINT saved_job_offers_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: searches searches_pkey; Type: CONSTRAINT; Schema: public; Owner: irelis
+--
+
+ALTER TABLE ONLY public.searches
+    ADD CONSTRAINT searches_pkey PRIMARY KEY (id);
 
 
 --
@@ -896,14 +1113,6 @@ ALTER TABLE ONLY public.sector
 
 ALTER TABLE ONLY public.skill
     ADD CONSTRAINT skill_pkey PRIMARY KEY (id);
-
-
---
--- Name: tag tag_nom_key; Type: CONSTRAINT; Schema: public; Owner: irelis
---
-
-ALTER TABLE ONLY public.tag
-    ADD CONSTRAINT tag_nom_key UNIQUE (nom);
 
 
 --
@@ -931,35 +1140,19 @@ ALTER TABLE ONLY public.saved_job_offers
 
 
 --
--- Name: candidates ukdoi1o7iyehcrqrrrbxjostvv5; Type: CONSTRAINT; Schema: public; Owner: irelis
---
-
-ALTER TABLE ONLY public.candidates
-    ADD CONSTRAINT ukdoi1o7iyehcrqrrrbxjostvv5 UNIQUE (user_id);
-
-
---
--- Name: recruiters uklhuhr3tmewk16uubn7q6w28t6; Type: CONSTRAINT; Schema: public; Owner: irelis
---
-
-ALTER TABLE ONLY public.recruiters
-    ADD CONSTRAINT uklhuhr3tmewk16uubn7q6w28t6 UNIQUE (user_id);
-
-
---
--- Name: job_preferences uknvexlhg48x64953a0bgp77l5p; Type: CONSTRAINT; Schema: public; Owner: irelis
---
-
-ALTER TABLE ONLY public.job_preferences
-    ADD CONSTRAINT uknvexlhg48x64953a0bgp77l5p UNIQUE (candidate_id);
-
-
---
 -- Name: user_sessions user_sessions_pkey; Type: CONSTRAINT; Schema: public; Owner: irelis
 --
 
 ALTER TABLE ONLY public.user_sessions
     ADD CONSTRAINT user_sessions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: irelis
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_email_key UNIQUE (email);
 
 
 --
@@ -1002,6 +1195,14 @@ ALTER TABLE ONLY public.recruiters
 
 
 --
+-- Name: job_offer_tags fk6jo4l36cdbmkoql3gtv4wbl3c; Type: FK CONSTRAINT; Schema: public; Owner: irelis
+--
+
+ALTER TABLE ONLY public.job_offer_tags
+    ADD CONSTRAINT fk6jo4l36cdbmkoql3gtv4wbl3c FOREIGN KEY (tag_id) REFERENCES public.tag(id);
+
+
+--
 -- Name: experience fk86hiusttkmjri79aaq768i0j3; Type: FK CONSTRAINT; Schema: public; Owner: irelis
 --
 
@@ -1018,11 +1219,35 @@ ALTER TABLE ONLY public.user_sessions
 
 
 --
+-- Name: job_offer_tags fk9nva3u1mo012bhly1t9psi9a8; Type: FK CONSTRAINT; Schema: public; Owner: irelis
+--
+
+ALTER TABLE ONLY public.job_offer_tags
+    ADD CONSTRAINT fk9nva3u1mo012bhly1t9psi9a8 FOREIGN KEY (job_offer_id) REFERENCES public.job_offer(id);
+
+
+--
+-- Name: application_document fkb7xr983jbgy8cj40aobikcqlk; Type: FK CONSTRAINT; Schema: public; Owner: irelis
+--
+
+ALTER TABLE ONLY public.application_document
+    ADD CONSTRAINT fkb7xr983jbgy8cj40aobikcqlk FOREIGN KEY (application_id) REFERENCES public.applications(id);
+
+
+--
 -- Name: job_preferences_contract_types fkddnfcbtlslmj1c81pejbephjs; Type: FK CONSTRAINT; Schema: public; Owner: irelis
 --
 
 ALTER TABLE ONLY public.job_preferences_contract_types
     ADD CONSTRAINT fkddnfcbtlslmj1c81pejbephjs FOREIGN KEY (job_preferences_id) REFERENCES public.job_preferences(id);
+
+
+--
+-- Name: candidature_info fke4rv6kmi64ct7pnu9461ec43b; Type: FK CONSTRAINT; Schema: public; Owner: irelis
+--
+
+ALTER TABLE ONLY public.candidature_info
+    ADD CONSTRAINT fke4rv6kmi64ct7pnu9461ec43b FOREIGN KEY (job_offer_id) REFERENCES public.job_offer(id);
 
 
 --
@@ -1114,24 +1339,16 @@ ALTER TABLE ONLY public.language
 
 
 --
--- Name: job_offer_tags job_offer_tags_job_offer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: irelis
+-- Name: required_documents fkslnbpgit0aban0a4k5ji54gk8; Type: FK CONSTRAINT; Schema: public; Owner: irelis
 --
 
-ALTER TABLE ONLY public.job_offer_tags
-    ADD CONSTRAINT job_offer_tags_job_offer_id_fkey FOREIGN KEY (job_offer_id) REFERENCES public.job_offer(id);
-
-
---
--- Name: job_offer_tags job_offer_tags_tag_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: irelis
---
-
-ALTER TABLE ONLY public.job_offer_tags
-    ADD CONSTRAINT job_offer_tags_tag_id_fkey FOREIGN KEY (tag_id) REFERENCES public.tag(id);
+ALTER TABLE ONLY public.required_documents
+    ADD CONSTRAINT fkslnbpgit0aban0a4k5ji54gk8 FOREIGN KEY (job_offer_id) REFERENCES public.job_offer(id);
 
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 7zhDMSuMbbfrD6bctrwYgumbL0PD1uy2kv39KoGph2LW2VzEqnsH5cTIRCSRwf4
+\unrestrict 9w0xlgw9FHUVamaBb8voRXU18f20cjTniUyHjNH3JtRW1kt1D88fZpGW5vJf4jA
 

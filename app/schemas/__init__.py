@@ -1,6 +1,8 @@
 from .entities import (
+    ApplicationDocumentRead,
     ApplicationRead,
     CandidateRead,
+    CandidatureInfoRead,
     EmailOtpRead,
     EducationRead,
     ExperienceRead,
@@ -9,7 +11,10 @@ from .entities import (
     JobPreferencesRead,
     JobPreferencesSectorLinkRead,
     LanguageRead,
+    MatchingScoreRequest,
+    MatchingScoreResponse,
     RecruiterRead,
+    RequiredDocumentRead,
     SavedJobOfferRead,
     SectorRead,
     TagRead,
@@ -21,8 +26,10 @@ from .entities import (
 )
 
 __all__ = [
+    "ApplicationDocumentRead",
     "ApplicationRead",
     "CandidateRead",
+    "CandidatureInfoRead",
     "EmailOtpRead",
     "EducationRead",
     "ExperienceRead",
@@ -31,7 +38,10 @@ __all__ = [
     "JobPreferencesRead",
     "JobPreferencesSectorLinkRead",
     "LanguageRead",
+    "MatchingScoreRequest",
+    "MatchingScoreResponse",
     "RecruiterRead",
+    "RequiredDocumentRead",
     "SavedJobOfferRead",
     "SectorRead",
     "TagRead",

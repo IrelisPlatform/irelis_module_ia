@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import TYPE_CHECKING
+from uuid import UUID
 
-from sqlalchemy import or_, func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, selectinload
 
-from app.models import Candidate, JobOffer, Tag
+from app.models import Candidate, JobOffer, Search, Tag
+from app.models.enums import SearchTarget, SearchType
 
 if TYPE_CHECKING:
     from app.schemas import SearchCreate
@@ -43,10 +45,9 @@ class SearchRepository:
         else:
             value = str(raw_terms).strip()
             terms = [value] if value else []
-
+        
         if not terms:
             return query
-
         search_clauses = []
         for term in terms:
             like_term = f"%{term}%"
@@ -54,9 +55,10 @@ class SearchRepository:
                 or_(
                     JobOffer.title.ilike(like_term),
                     JobOffer.description.ilike(like_term),
-                    JobOffer.tags.any(Tag.nom.ilike(like_term)),
+                    JobOffer.tags.any(Tag.name.ilike(like_term)),
                 )
             )
+        
         query = query.filter(or_(*search_clauses))
         return query
 
@@ -87,6 +89,21 @@ class SearchRepository:
         if value is None:
             return None
         return value.strip().lower()
+
+    @staticmethod
+    def _enum_to_str(value):
+        if value is None:
+            return None
+        return value.value if hasattr(value, "value") else str(value)
+
+    def _list_to_csv(self, value):
+        items = self._as_list(value)
+        normalized: list[str] = []
+        for item in items:
+            if item is None:
+                continue
+            normalized.append(self._enum_to_str(item))
+        return ", ".join(normalized) if normalized else None
 
     def search_for_candidate(
         self,
@@ -121,7 +138,7 @@ class SearchRepository:
             country = candidate.country
         if country:
             normalized_country = self._normalize(country)
-            query = query.filter(func.lower(JobOffer.country) == normalized_country)
+            query = query.filter(func.lower(JobOffer.work_country_location) == normalized_country)
 
         city = filters.get("city")
         if not city and candidate_preferences and candidate_preferences.city:
@@ -130,16 +147,7 @@ class SearchRepository:
             city = candidate.city
         if city:
             normalized_city = self._normalize(city)
-            query = query.filter(func.lower(JobOffer.city) == normalized_city)
-
-        region = filters.get("town") or filters.get("region")
-        if not region and candidate_preferences and candidate_preferences.region:
-            region = candidate_preferences.region
-        if not region:
-            region = candidate.region
-        if region:
-            normalized_region = self._normalize(region)
-            query = query.filter(func.lower(JobOffer.region) == normalized_region)
+            query = query.filter(func.lower(JobOffer.work_city_location) == normalized_city)
 
         skill_names = filters.get("skills")
         if not skill_names:
@@ -151,20 +159,8 @@ class SearchRepository:
             normalized_skills = [self._normalize(skill) for skill in skill_values if skill]
             if normalized_skills:
                 query = query.filter(
-                    JobOffer.tags.any(func.lower(Tag.nom).in_(normalized_skills))
+                    JobOffer.tags.any(func.lower(Tag.name).in_(normalized_skills))
                 )
-
-        experience = filters.get("experience") or filters.get("experience_level")
-        if not experience:
-            experience = getattr(candidate, "experience_level", None)
-        if experience:
-            query = query.filter(JobOffer.experience_level == experience)
-
-        school_level = filters.get("niveau_etude") or filters.get("school_level")
-        if not school_level:
-            school_level = getattr(candidate, "school_level", None)
-        if school_level:
-            query = query.filter(JobOffer.school_level == school_level)
 
         date_publication = self._parse_datetime(filters.get("date_publication"))
         if date_publication:
@@ -177,6 +173,7 @@ class SearchRepository:
                 or_(
                     JobOffer.title.ilike(like_language),
                     JobOffer.description.ilike(like_language),
+                    JobOffer.required_language.ilike(like_language),
                 )
             )
 
@@ -184,36 +181,24 @@ class SearchRepository:
 
     def search_by_payload(self, payload: "SearchCreate") -> list[JobOffer]:
         query = self._query()
-
+        
         query = self._apply_text_search(query, getattr(payload, "query", None))
 
         country = getattr(payload, "country", None)
+        
         if country:
             normalized_country = self._normalize(country)
-            query = query.filter(func.lower(JobOffer.country) == normalized_country)
+            query = query.filter(func.lower(JobOffer.work_country_location) == normalized_country)
 
         city = getattr(payload, "city", None)
         if city:
             normalized_city = self._normalize(city)
-            query = query.filter(func.lower(JobOffer.city) == normalized_city)
-
-        town = getattr(payload, "town", None)
-        if town:
-            normalized_region = self._normalize(town)
-            query = query.filter(func.lower(JobOffer.region) == normalized_region)
+            query = query.filter(func.lower(JobOffer.work_city_location) == normalized_city)
 
         contract_type = getattr(payload, "type_contrat", None) or getattr(payload, "contract_type", None)
         contract_values = self._as_list(contract_type)
         if contract_values:
             query = query.filter(JobOffer.contract_type.in_(contract_values))
-
-        experience = getattr(payload, "experience", None) or getattr(payload, "experience_level", None)
-        if experience:
-            query = query.filter(JobOffer.experience_level == experience)
-
-        school_level = getattr(payload, "niveau_etude", None) or getattr(payload, "school_level", None)
-        if school_level:
-            query = query.filter(JobOffer.school_level == school_level)
 
         language = getattr(payload, "language", None)
         if language:
@@ -222,6 +207,7 @@ class SearchRepository:
                 or_(
                     JobOffer.title.ilike(like_language),
                     JobOffer.description.ilike(like_language),
+                    JobOffer.required_language.ilike(like_language),
                 )
             )
 
@@ -229,13 +215,46 @@ class SearchRepository:
         if date_publication:
             query = query.filter(JobOffer.published_at >= date_publication)
 
-        skill_names = getattr(payload, "skills", None)
-        skill_values = self._as_list(skill_names)
-        if skill_values:
-            normalized_skills = [self._normalize(skill) for skill in skill_values if skill]
-            if normalized_skills:
-                query = query.filter(
-                    JobOffer.tags.any(func.lower(Tag.nom).in_(normalized_skills))
-                )
-
+        
         return query.all()
+
+    def record_search(self, user_id: UUID, payload: "SearchCreate" | None) -> None:
+        search_type = SearchType.BOOL
+        target = SearchTarget.OFFRE
+        query_text = ""
+        country = city = town = None
+        type_contrat = None
+        niveau_etude = None
+        experience = None
+        language = None
+        date_publication = None
+
+        if payload is not None:
+            search_type = payload.type or SearchType.BOOL
+            target = payload.target or SearchTarget.OFFRE
+            query_text = payload.query or ""
+            country = payload.country
+            city = payload.city
+            town = payload.town
+            type_contrat = payload.type_contrat or payload.contract_type
+            niveau_etude = payload.niveau_etude or payload.school_level
+            experience = payload.experience or payload.experience_level
+            language = payload.language
+            date_publication = payload.date_publication
+
+        search_entry = Search(
+            query=query_text,
+            type=search_type,
+            target=target,
+            country=country,
+            city=city,
+            town=town,
+            type_contrat=self._list_to_csv(type_contrat),
+            niveau_etude=self._enum_to_str(niveau_etude),
+            experience=self._enum_to_str(experience),
+            language=language,
+            date_publication=date_publication,
+            user_id=user_id,
+        )
+        self.db.add(search_entry)
+        self.db.commit()

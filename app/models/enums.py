@@ -64,11 +64,10 @@ class JobType(str, Enum):
 
 
 class JobOfferStatus(str, Enum):
-    CLOSED = "CLOSED"
-    DELETED = "DELETED"
-    DRAFT = "DRAFT"
-    EXPIRED = "EXPIRED"
+    PENDING = "PENDING"
     PUBLISHED = "PUBLISHED"
+    EXPIRED = "EXPIRED"
+    CLOSED = "CLOSED"
 
 
 class SkillLevel(str, Enum):
@@ -86,9 +85,18 @@ class LanguageLevel(str, Enum):
     NATIVE_LANGUAGE = "NATIVE_LANGUAGE"
 
 
+class DocumentType(str, Enum):
+    CV = "CV"
+    COVER_LETTER = "COVER_LETTER"
+    PORTFOLIO = "PORTFOLIO"
+    CERTIFICATE = "CERTIFICATE"
+    IDENTITY_DOC = "IDENTITY_DOC"
+
+
 class OtpPurpose(str, Enum):
     LOGIN_REGISTER = "LOGIN_REGISTER"
     PASSWORD_RESET = "PASSWORD_RESET"
+    OAUTH2 = "OAUTH2"
 
 
 class SearchType(str, Enum):

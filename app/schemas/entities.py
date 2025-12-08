@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field
@@ -8,6 +8,7 @@ from pydantic import BaseModel, EmailStr, Field
 from app.models.enums import (
     ApplicationStatus,
     ContractType,
+    DocumentType,
     ExperienceLevel,
     JobOfferStatus,
     JobType,
@@ -56,7 +57,10 @@ class SectorRead(BaseModel):
 
 class TagRead(BaseModel):
     id: UUID
-    nom: str
+    name: str
+    type: str | None = None
+    created_at: datetime
+    updated_at: datetime | None = None
 
     class Config:
         from_attributes = True
@@ -102,6 +106,16 @@ class SearchBase(BaseModel):
 
 class SearchCreate(SearchBase):
     user_id: UUID | None = None
+
+
+class MatchingScoreRequest(BaseModel):
+    candidate_id: UUID
+    offer_id: UUID
+
+
+class MatchingScoreResponse(BaseModel):
+    score: float
+    matched_skills: list[str] = Field(default_factory=list)
 
 
 class EducationRead(BaseModel):
@@ -192,16 +206,28 @@ class JobPreferencesRead(BaseModel):
         from_attributes = True
 
 
+class ApplicationDocumentRead(BaseModel):
+    id: UUID
+    application_id: UUID | None = None
+    storage_url: str | None = None
+    type: DocumentType | None = None
+    created_at: datetime
+    updated_at: datetime | None = None
+
+    class Config:
+        from_attributes = True
+
+
 class ApplicationRead(BaseModel):
     id: UUID
-    cover_letter: str | None = None
-    resume_url: str | None = None
+    message: str | None = None
     status: ApplicationStatus | None = None
     candidate_id: UUID
     job_offer_id: UUID
     applied_at: datetime | None = None
     created_at: datetime
     updated_at: datetime | None = None
+    documents: list[ApplicationDocumentRead] = Field(default_factory=list)
 
     class Config:
         from_attributes = True
@@ -211,7 +237,6 @@ class SavedJobOfferRead(BaseModel):
     id: UUID
     candidate_id: UUID
     job_offer_id: UUID
-    saved_at: datetime | None = None
     created_at: datetime
     updated_at: datetime | None = None
 
@@ -230,6 +255,9 @@ class CandidateRead(BaseModel):
     experience_level: str | None = None
     first_name: str | None = None
     is_visible: bool | None = None
+    last_viewed_month: date | None = None
+    monthly_profile_views: int | None = None
+    profile_views: int | None = None
     last_name: str | None = None
     linked_in_url: str | None = None
     city: str | None = None
@@ -285,21 +313,47 @@ class RecruiterRead(BaseModel):
 class JobOfferBase(BaseModel):
     contract_type: ContractType | None = None
     description: str | None = None
-    experience_level: ExperienceLevel | None = None
     expiration_date: datetime | None = None
+    instructions: str | None = None
     is_featured: bool | None = None
     is_urgent: bool | None = None
     job_type: JobType | None = None
-    city: str | None = None
-    country: str | None = None
-    region: str | None = None
-    max_salary: float | None = None
-    min_salary: float | None = None
+    post_number: int | None = None
+    salary: str | None = None
     published_at: datetime | None = None
-    school_level: SchoolLevel | None = None
-    show_salary: bool | None = None
+    required_language: str | None = None
     status: JobOfferStatus | None = None
     title: str | None = None
+    work_city_location: str | None = None
+    work_country_location: str | None = None
+    benefits: int | None = None
+    requirements: int | None = None
+    responsibilities: int | None = None
+
+
+class CandidatureInfoRead(BaseModel):
+    id: UUID
+    job_offer_id: UUID
+    email_candidature: str | None = None
+    instructions: str | None = None
+    required_documents: str | None = None
+    url_candidature: str | None = None
+    created_at: datetime
+    updated_at: datetime | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class RequiredDocumentRead(BaseModel):
+    id: UUID
+    job_offer_id: UUID | None = None
+    type: DocumentType | None = None
+    created_at: datetime
+    updated_at: datetime | None = None
+
+    class Config:
+        from_attributes = True
 
 
 class JobOfferRead(JobOfferBase):
@@ -310,6 +364,8 @@ class JobOfferRead(JobOfferBase):
     recruiter: RecruiterRead | None = None
     applications: list[ApplicationRead] = Field(default_factory=list)
     tags: list[TagRead] = Field(default_factory=list)
+    candidature_info: CandidatureInfoRead | None = None
+    required_documents: list[RequiredDocumentRead] = Field(default_factory=list)
 
     class Config:
         from_attributes = True

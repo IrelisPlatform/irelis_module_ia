@@ -1,0 +1,153 @@
+{
+  "id": "6d04fbd3-596e-4871-8b4b-330bc386c2eb",
+  "created_at": "2025-12-04T09:17:24.996580",
+  "updated_at": "2025-12-04T09:17:24.996580",
+  "avatar_url": "https://placeholder.com/avatar.png",
+  "birth_date": "1990-05-16T09:17:24.996565",
+  "completion_rate": 85.42,
+  "cv_url": null,
+  "experience_level": "INTERMEDIATE",
+  "first_name": "Ariane",
+  "is_visible": true,
+  "last_name": "Ndongo",
+  "linked_in_url": null,
+  "city": "Bamenda",
+  "country": "Cameroon",
+  "region": "Nord-Ouest",
+  "motivation_letter_url": null,
+  "phone_number": "+237615205303",
+  "pitch_mail": null,
+  "portfolio_url": null,
+  "presentation": null,
+  "professional_title": "UX/UI Designer",
+  "school_level": "LICENCE",
+  "user_id": "e9a44152-8fd3-4674-ad31-55d2db9b0d91",
+  "job_preferences": {
+    "id": "a1d8d00c-037c-49a9-a9c7-2c493c714b80",
+    "availability": "Disponible",
+    "desired_position": "Community Manager",
+    "city": "Bamenda",
+    "country": "Cameroon",
+    "region": "Nord-Ouest",
+    "pretentions_salarial": "570262 XAF",
+    "candidate_id": "6d04fbd3-596e-4871-8b4b-330bc386c2eb",
+    "contract_types": [
+      {
+        "contract_type": "CDD"
+      },
+      {
+        "contract_type": "INTERNSHIP"
+      }
+    ],
+    "sectors": [
+      {
+        "sector_id": "2b0a38eb-ba3a-4a67-912a-396c98f88d38",
+        "sector": {
+          "id": "2b0a38eb-ba3a-4a67-912a-396c98f88d38",
+          "name": "Agriculture",
+          "description": "Agro-industrie et chaînes d'approvisionnement",
+          "created_at": "2025-12-04T09:17:24.877416+01:00",
+          "updated_at": "2025-12-04T09:17:24.877417+01:00"
+        }
+      },
+      {
+        "sector_id": "5fdc9942-6aa0-46c5-ad28-ede070fed4bc",
+        "sector": {
+          "id": "5fdc9942-6aa0-46c5-ad28-ede070fed4bc",
+          "name": "Éducation",
+          "description": "Institutions et formation",
+          "created_at": "2025-12-04T09:17:24.877502+01:00",
+          "updated_at": "2025-12-04T09:17:24.877502+01:00"
+        }
+      }
+    ],
+    "created_at": "2025-12-04T09:17:25.082502+01:00",
+    "updated_at": "2025-12-04T09:17:25.082502+01:00"
+  },
+  "educations": [
+    {
+      "id": "ad8b9aed-1a41-4920-a9d7-e9c63126312c",
+      "city": "Bamenda",
+      "degree": "Licence en Communication",
+      "graduation_year": 2023,
+      "institution": "Université de Bamenda",
+      "candidate_id": "6d04fbd3-596e-4871-8b4b-330bc386c2eb",
+      "created_at": "2025-12-04T09:17:25.084579+01:00",
+      "updated_at": "2025-12-04T09:17:25.084580+01:00"
+    }
+  ],
+  "experiences": [
+    {
+      "id": "8eea26ac-11f6-49e4-b1ce-ebc57e4add44",
+      "city": "Bamenda",
+      "company_name": "Solutions Logistiques Afrique",
+      "description": "Contribué aux objectifs nationaux avec rigueur.",
+      "end_date": "2025-12-04T09:17:25.084606+01:00",
+      "is_current": true,
+      "position": "Analyste Junior",
+      "start_date": "2024-10-20T09:17:25.084606+01:00",
+      "candidate_id": "6d04fbd3-596e-4871-8b4b-330bc386c2eb",
+      "created_at": "2025-12-04T09:17:25.084610+01:00",
+      "updated_at": "2025-12-04T09:17:25.084610+01:00"
+    }
+  ],
+  "skills": [
+    {
+      "id": "4f89e030-4534-4ea4-8966-acb669aa942f",
+      "level": "INTERMEDIATE",
+      "name": "Python",
+      "candidate_id": "6d04fbd3-596e-4871-8b4b-330bc386c2eb",
+      "created_at": "2025-12-04T09:17:25.084639+01:00",
+      "updated_at": "2025-12-04T09:17:25.084639+01:00"
+    },
+    {
+      "id": "0d45f7a4-1469-4d0d-9cc3-0c38ab208153",
+      "level": "ADVANCED",
+      "name": "Power BI",
+      "candidate_id": "6d04fbd3-596e-4871-8b4b-330bc386c2eb",
+      "created_at": "2025-12-04T09:17:25.084659+01:00",
+      "updated_at": "2025-12-04T09:17:25.084659+01:00"
+    }
+  ],
+  "languages": [
+    {
+      "id": "e8fcd699-70b4-4207-a03a-6de7aa49c895",
+      "language": "Anglais",
+      "level": "NATIVE_LANGUAGE",
+      "candidate_id": "6d04fbd3-596e-4871-8b4b-330bc386c2eb",
+      "created_at": "2025-12-04T09:17:25.084676+01:00",
+      "updated_at": "2025-12-04T09:17:25.084676+01:00"
+    }
+  ],
+  "applications": [
+    {
+      "id": "8311d972-5c36-4ad2-bdcc-e7d6df43d27b",
+      "cover_letter": null,
+      "resume_url": null,
+      "status": "WITHDRAWN",
+      "candidate_id": "6d04fbd3-596e-4871-8b4b-330bc386c2eb",
+      "job_offer_id": "a1bc0b4e-2d29-412b-a977-d6581f55fa6c",
+      "applied_at": "2025-11-07T09:17:25.164812+01:00",
+      "created_at": "2025-12-04T09:17:25.164817+01:00",
+      "updated_at": "2025-12-04T09:17:25.164817+01:00"
+    }
+  ],
+  "saved_job_offers": [
+    {
+      "id": "275d911d-2017-45df-866b-fc033030c6dc",
+      "candidate_id": "6d04fbd3-596e-4871-8b4b-330bc386c2eb",
+      "job_offer_id": "7e8ebf53-4da2-414c-9b4b-c7c8f3384fa2",
+      "saved_at": "2025-12-04T09:17:25.166112+01:00",
+      "created_at": "2025-12-04T09:17:25.166112+01:00",
+      "updated_at": "2025-12-04T09:17:25.166112+01:00"
+    },
+    {
+      "id": "e394cc9e-9dd6-41f8-8c9f-3a107497c556",
+      "candidate_id": "6d04fbd3-596e-4871-8b4b-330bc386c2eb",
+      "job_offer_id": "cb0afd41-defb-4b48-9122-86bfefab774d",
+      "saved_at": "2025-12-04T09:17:25.166265+01:00",
+      "created_at": "2025-12-04T09:17:25.166265+01:00",
+      "updated_at": "2025-12-04T09:17:25.166265+01:00"
+    }
+  ]
+}
