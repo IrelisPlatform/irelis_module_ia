@@ -6,6 +6,7 @@ from . import (
     offer_router,
     recruiter_router,
     search_router,
+    sourcing_router,
 )
 
 __all__ = [
@@ -14,4 +15,5 @@ __all__ = [
     "recruiter_router",
     "offer_router",
     "search_router",
+    "sourcing_router",
 ]

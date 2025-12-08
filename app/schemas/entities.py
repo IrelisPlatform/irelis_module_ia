@@ -118,6 +118,18 @@ class MatchingScoreResponse(BaseModel):
     matched_skills: list[str] = Field(default_factory=list)
 
 
+class CandidateMatch(BaseModel):
+    id: UUID
+    name: str
+    score: float
+    location: str | None = None
+    skills: list[str] = Field(default_factory=list)
+
+
+class SourcingSearchResponse(BaseModel):
+    candidates: list[CandidateMatch] = Field(default_factory=list)
+
+
 class EducationRead(BaseModel):
     id: UUID
     city: str | None = None

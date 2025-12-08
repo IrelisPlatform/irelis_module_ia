@@ -73,9 +73,32 @@ class MatchingService:
         if candidate is None or offer is None:
             return None
 
-        components, matched_skills = self._compute_components(candidate, offer)
-        score = sum(self.weights[name] * value for name, value in components.items())
+        score, matched_skills = self._score_candidate(candidate, offer)
         return MatchingScoreResponse(score=round(score, 4), matched_skills=matched_skills)
+
+    def rank_candidates_for_offer(
+        self,
+        offer_id: UUID,
+        limit: int = 10,
+    ) -> list[dict] | None:
+        offer = self.offers.get(offer_id)
+        if offer is None:
+            return None
+
+        candidates = self.candidates.list()
+        scored_results: list[dict] = []
+        for candidate in candidates:
+            score, matched_skills = self._score_candidate(candidate, offer)
+            scored_results.append(
+                {
+                    "candidate": candidate,
+                    "score": round(score, 4),
+                    "matched_skills": matched_skills,
+                }
+            )
+
+        scored_results.sort(key=lambda item: item["score"], reverse=True)
+        return scored_results[:limit]
 
     # ------------------------------------------------------------------
     # Component builders
@@ -104,6 +127,11 @@ class MatchingService:
             "profile_focus": profile_focus,
         }
         return components, matched_skills
+
+    def _score_candidate(self, candidate, offer) -> tuple[float, list[str]]:
+        components, matched_skills = self._compute_components(candidate, offer)
+        score = sum(self.weights[name] * value for name, value in components.items())
+        return score, matched_skills
 
     # ------------------------------------------------------------------
     # Helpers
