@@ -130,6 +130,16 @@ class SourcingSearchResponse(BaseModel):
     candidates: list[CandidateMatch] = Field(default_factory=list)
 
 
+class JobOfferMatch(BaseModel):
+    offer: JobOfferRead
+    score: float
+    matched_skills: list[str] = Field(default_factory=list)
+
+
+class CandidateRecommendationsResponse(BaseModel):
+    offers: list[JobOfferMatch] = Field(default_factory=list)
+
+
 class EducationRead(BaseModel):
     id: UUID
     city: str | None = None

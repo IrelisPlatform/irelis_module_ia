@@ -100,6 +100,30 @@ class MatchingService:
         scored_results.sort(key=lambda item: item["score"], reverse=True)
         return scored_results[:limit]
 
+    def recommend_offers_for_candidate(
+        self,
+        candidate_id: UUID,
+        limit: int = 10,
+    ) -> list[dict] | None:
+        candidate = self.candidates.get(candidate_id)
+        if candidate is None:
+            return None
+
+        offers = self.offers.list()
+        scored_results: list[dict] = []
+        for offer in offers:
+            score, matched_skills = self._score_candidate(candidate, offer)
+            scored_results.append(
+                {
+                    "offer": offer,
+                    "score": round(score, 4),
+                    "matched_skills": matched_skills,
+                }
+            )
+
+        scored_results.sort(key=lambda item: item["score"], reverse=True)
+        return scored_results[:limit]
+
     # ------------------------------------------------------------------
     # Component builders
     # ------------------------------------------------------------------
@@ -155,10 +179,10 @@ class MatchingService:
     def _extract_offer_skills(self, offer) -> tuple[set[str], dict[str, str]]:
         skill_map: dict[str, str] = {}
         for tag in getattr(offer, "tags", []) or []:
-            name = self._normalize(getattr(tag, "name", None))
+            name = self._normalize(getattr(tag, "nom", None))
             if not name:
                 continue
-            skill_map[name] = tag.name.strip()
+            skill_map[name] = tag.nom.strip()
         return set(skill_map.keys()), skill_map
 
     # --- coverage & similarity ---
