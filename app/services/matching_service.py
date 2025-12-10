@@ -234,23 +234,24 @@ class MatchingService:
 
     # --- geographic fit ---
     def _geo_fit(self, candidate, offer) -> float:
-        offer_country = self._normalize(getattr(offer, "work_country_location", None)).lower()
-        offer_city = self._normalize(getattr(offer, "work_city_location", None)).lower()
+        offer_country = self._normalize(getattr(offer, "work_country_location", None))
+        
+        offer_city = self._normalize(getattr(offer, "work_city_location", None))
 
         pref = getattr(candidate, "job_preferences", None)
         cand_country = self._normalize(getattr(pref, "country", None)) or self._normalize(
             getattr(candidate, "country", None)
-        ).lower()
+        )
         # cand_region = self._normalize(getattr(pref, "region", None)) or self._normalize(
         #     getattr(candidate, "region", None)
         # )
         cand_city = self._normalize(getattr(pref, "city", None)) or self._normalize(
             getattr(candidate, "city", None)
-        ).lower()
+        )
         score = 0.0
-        if offer_city and cand_city and offer_city == cand_city:
+        if offer_city and cand_city and offer_city.lower() == cand_city.lower():
             score = 1.0
-        elif offer_country and offer_country == cand_country:
+        elif offer_country and cand_country and offer_country.lower() == cand_country.lower():
             score = 0.5
         
         return score
