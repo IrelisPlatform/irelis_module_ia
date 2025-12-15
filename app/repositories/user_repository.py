@@ -34,3 +34,6 @@ class UserRepository:
         if user is None:
             return None
         return user.candidate
+    
+    def get(self, user_id: UUID) -> User | None:
+        return self._query().filter(User.id == user_id).first()
