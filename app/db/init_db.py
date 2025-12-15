@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 def init_db(db: Session) -> None:
+    """Create database tables if they do not exist."""
     logger.info("Initializing database")
     bind = db.get_bind()
     Base.metadata.create_all(bind=bind)

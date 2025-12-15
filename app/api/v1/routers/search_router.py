@@ -31,7 +31,9 @@ def _parse_search_offes_filters(
     language: str | None = Query(default=None),
     date_publication: datetime | None = Query(default=None)
 ) -> SearchCreate:
+    """Normalize incoming query parameters into a SearchCreate schema."""
     def _to_list(value):
+        """Return the provided query parameter as a list."""
         if value is None:
             return None
         if isinstance(value, list):
@@ -64,16 +66,17 @@ def search_offers(
     filters: SearchFilters,
     user_id: UUID | None = Query(default=None),
 ) -> list[JobOfferRead]:
+    """Search job offers by payload or contextually for a candidate."""
     
     service = SearchService(db)
     if user_id is None:
         return service.search_by_payload(filters)
 
     offers = service.search_for_candidate_by_user(user_id, filters)
+   
     if offers is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Candidat introuvable",
         )
     return offers
-

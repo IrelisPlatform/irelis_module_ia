@@ -315,6 +315,7 @@ SECTOR_ENTRIES = [
 
 
 def clear_tables(db: Session) -> None:
+    """Truncate or delete existing data to reset the database."""
     models = [
         JobOfferTag,
         RequiredDocument,
@@ -344,6 +345,7 @@ def clear_tables(db: Session) -> None:
 
 
 def create_sectors(db: Session) -> list[Sector]:
+    """Insert demo sectors and return them."""
     sectors: list[Sector] = []
     for name, description in SECTOR_ENTRIES:
         sector = Sector(
@@ -359,6 +361,7 @@ def create_sectors(db: Session) -> list[Sector]:
 
 
 def create_tags(db: Session) -> list[Tag]:
+    """Insert base tags used throughout the system."""
     tags: list[Tag] = []
     for skill in SKILL_TOPICS:
         tag = Tag(
@@ -374,6 +377,7 @@ def create_tags(db: Session) -> list[Tag]:
 
 
 def create_recruiters(db: Session, sectors: list[Sector]) -> tuple[list[Recruiter], list[User]]:
+    """Create recruiters and associated users for seeding."""
     recruiters: list[Recruiter] = []
     recruiter_users: list[User] = []
     for i in range(52):
@@ -422,6 +426,7 @@ def create_recruiters(db: Session, sectors: list[Sector]) -> tuple[list[Recruite
 
 
 def create_job_offers(db: Session, recruiters: list[Recruiter], tags: list[Tag]) -> list[JobOffer]:
+    """Insert sample job offers owned by seeded recruiters."""
     offers: list[JobOffer] = []
     for recruiter in recruiters:
         for _ in range(random.randint(2, 4)):
@@ -479,6 +484,7 @@ def create_job_offers(db: Session, recruiters: list[Recruiter], tags: list[Tag])
 
 
 def create_candidates(db: Session, sectors: list[Sector]) -> tuple[list[Candidate], list[User]]:
+    """Create candidate profiles (with related entities) and back their users."""
     candidates: list[Candidate] = []
     candidate_users: list[User] = []
     for i in range(60):
@@ -616,6 +622,7 @@ def create_applications_and_documents(
     candidates: list[Candidate],
     job_offers: list[JobOffer],
 ) -> None:
+    """Seed demo applications, documents, and saved offers."""
     applications: list[Application] = []
     for _ in range(80):
         application = Application(
@@ -657,6 +664,7 @@ def create_applications_and_documents(
 
 
 def create_email_otps(db: Session, users: list[User]) -> None:
+    """Create OTP entries for random users."""
     for _ in range(40):
         user = random.choice(users)
         otp = EmailOtp(
@@ -672,6 +680,7 @@ def create_email_otps(db: Session, users: list[User]) -> None:
 
 
 def create_sessions(db: Session, users: list[User]) -> None:
+    """Create active sessions for a subset of users."""
     selected = random.sample(users, k=min(60, len(users)))
     for user in selected:
         session = UserSession(
@@ -689,6 +698,7 @@ def create_sessions(db: Session, users: list[User]) -> None:
 
 
 def seed_database() -> None:
+    """High-level seeding routine used by CLI."""
     db = SessionLocal()
     try:
         clear_tables(db)

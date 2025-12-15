@@ -6,6 +6,7 @@ from app.db.session import SessionLocal
 
 
 def get_db() -> Generator[Session, None, None]:
+    """Provide a transactional scope to route handlers via dependency injection."""
     db = SessionLocal()
     try:
         yield db

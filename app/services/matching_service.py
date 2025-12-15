@@ -9,7 +9,14 @@ from sqlalchemy.orm import Session
 
 from app.repositories.candidate_repository import CandidateRepository
 from app.repositories.offer_repository import OfferRepository
-from app.schemas import MatchingScoreResponse
+from app.schemas import (
+    CandidateMatch,
+    CandidateRecommendationsResponse,
+    JobOfferMatch,
+    JobOfferRead,
+    MatchingScoreResponse,
+    SourcingSearchResponse,
+)
 
 
 LANGUAGE_ALIASES = {
@@ -50,6 +57,7 @@ class MatchingWeights:
     profile_focus: float = 0.05
 
     def as_dict(self) -> dict[str, float]:
+        """Return normalized weights that sum to 1."""
         values = self.__dict__
         total = sum(values.values()) or 1
         return {key: weight / total for key, weight in values.items()}
@@ -59,6 +67,7 @@ class MatchingService:
     """Compute compatibility scores between candidates and job offers."""
 
     def __init__(self, db: Session, weights: MatchingWeights | None = None):
+        """Wire repositories and optionally override component weights."""
         self.candidates = CandidateRepository(db)
         self.offers = OfferRepository(db)
         self.weights = (weights or MatchingWeights()).as_dict()
@@ -68,6 +77,7 @@ class MatchingService:
         candidate_id: UUID,
         offer_id: UUID,
     ) -> MatchingScoreResponse | None:
+        """Compute matching metrics for a candidate/offer pair."""
         candidate = self.candidates.get(candidate_id)
         offer = self.offers.get(offer_id)
         if candidate is None or offer is None:
@@ -80,54 +90,59 @@ class MatchingService:
         self,
         offer_id: UUID,
         limit: int = 10,
-    ) -> list[dict] | None:
+    ) -> SourcingSearchResponse | None:
+        """Rank candidates for a given offer and return a sourcing response."""
         offer = self.offers.get(offer_id)
         if offer is None:
             return None
 
         candidates = self.candidates.list()
-        scored_results: list[dict] = []
+        matches: list[CandidateMatch] = []
         for candidate in candidates:
             score, matched_skills = self._score_candidate(candidate, offer)
-            scored_results.append(
-                {
-                    "candidate": candidate,
-                    "score": round(score, 4),
-                    "matched_skills": matched_skills,
-                }
+            matches.append(
+                CandidateMatch(
+                    id=candidate.id,
+                    name=self._candidate_public_name(candidate),
+                    score=round(score, 4),
+                    location=self._candidate_location(candidate),
+                    skills=matched_skills or self._candidate_skill_names(candidate),
+                )
             )
 
-        scored_results.sort(key=lambda item: item["score"], reverse=True)
-        return scored_results[:limit]
+        matches.sort(key=lambda match: match.score, reverse=True)
+        return SourcingSearchResponse(candidates=matches[:limit])
 
     def recommend_offers_for_candidate(
         self,
         candidate_id: UUID,
         limit: int = 10,
-    ) -> list[dict] | None:
+    ) -> CandidateRecommendationsResponse | None:
+        """Rank offers for a candidate and return a recommendation payload."""
         candidate = self.candidates.get(candidate_id)
         if candidate is None:
             return None
 
         offers = self.offers.list()
-        scored_results: list[dict] = []
+        ranked_offers: list[JobOfferMatch] = []
         for offer in offers:
             score, matched_skills = self._score_candidate(candidate, offer)
-            scored_results.append(
-                {
-                    "offer": offer,
-                    "score": round(score, 4),
-                    "matched_skills": matched_skills,
-                }
+            ranked_offers.append(
+                JobOfferMatch(
+                    offer=JobOfferRead.model_validate(offer),
+                    score=round(score, 4),
+                    matched_skills=matched_skills,
+                )
             )
 
-        scored_results.sort(key=lambda item: item["score"], reverse=True)
-        return scored_results[:limit]
+        ranked_offers.sort(key=lambda item: item.score, reverse=True)
+        return CandidateRecommendationsResponse(offers=ranked_offers[:limit])
 
     # ------------------------------------------------------------------
     # Component builders
     # ------------------------------------------------------------------
     def _compute_components(self, candidate, offer) -> tuple[dict[str, float], list[str]]:
+        """Break down the final matching score into weighted components."""
         offer_skills, offer_skill_map = self._extract_offer_skills(offer)
         candidate_skills = self._extract_candidate_skills(candidate)
 
@@ -153,6 +168,7 @@ class MatchingService:
         return components, matched_skills
 
     def _score_candidate(self, candidate, offer) -> tuple[float, list[str]]:
+        """Aggregate component scores into a final weighted score."""
         components, matched_skills = self._compute_components(candidate, offer)
         score = sum(self.weights[name] * value for name, value in components.items())
         return score, matched_skills
@@ -162,12 +178,14 @@ class MatchingService:
     # ------------------------------------------------------------------
     @staticmethod
     def _normalize(value: str | None) -> str | None:
+        """Normalize raw text for comparisons."""
         if value is None:
             return None
         normalized = value.strip().lower()
         return normalized or None
 
     def _extract_candidate_skills(self, candidate) -> set[str]:
+        """Return normalized skill names from a candidate entity."""
         normalized: set[str] = set()
         for skill in getattr(candidate, "skills", []) or []:
             name = self._normalize(getattr(skill, "name", None))
@@ -177,6 +195,7 @@ class MatchingService:
         return normalized
 
     def _extract_offer_skills(self, offer) -> tuple[set[str], dict[str, str]]:
+        """Return normalized offer skills and keep original labels."""
         skill_map: dict[str, str] = {}
         for tag in getattr(offer, "tags", []) or []:
             name = self._normalize(getattr(tag, "nom", None))
@@ -187,6 +206,7 @@ class MatchingService:
 
     # --- coverage & similarity ---
     def _title_similarity(self, candidate, offer) -> float:
+        """Score how similar candidate and offer titles/texts are."""
         offer_title = self._normalize(getattr(offer, "title", None))
         candidate_titles = self._candidate_titles(candidate)
         
@@ -209,6 +229,7 @@ class MatchingService:
         return result
 
     def _candidate_titles(self, candidate) -> list[str]:
+        """Gather representative titles from a candidate profile."""
         titles: list[str] = []
         pref = getattr(candidate, "job_preferences", None)
         raw_values = [
@@ -230,10 +251,12 @@ class MatchingService:
 
     @staticmethod
     def _tokenize(value: str) -> list[str]:
+        """Tokenize strings into normalized alphanumeric chunks."""
         return re.findall(r"[a-z0-9]+", value.lower())
 
     # --- geographic fit ---
     def _geo_fit(self, candidate, offer) -> float:
+        """Evaluate geographic compatibility between candidate and offer."""
         offer_country = self._normalize(getattr(offer, "work_country_location", None))
         
         offer_city = self._normalize(getattr(offer, "work_city_location", None))
@@ -258,6 +281,7 @@ class MatchingService:
 
     # --- seniority / experience ---
     def _seniority_fit(self, candidate, offer) -> float:
+        """Compare seniority expectations between the two profiles."""
         candidate_level = self._normalize(getattr(candidate, "experience_level", None))
         offer_level = self._infer_offer_seniority(offer)
         # print(offer)
@@ -268,6 +292,7 @@ class MatchingService:
         return 0.4
 
     def _infer_offer_seniority(self, offer) -> str | None:
+        """Guess the seniority level of an offer using tags and text."""
         for tag in getattr(offer, "tags", []) or []:
             normalized = self._normalize(getattr(tag, "name", None))
             if not normalized:
@@ -287,6 +312,7 @@ class MatchingService:
 
     # --- languages ---
     def _language_fit(self, candidate, offer) -> float:
+        """Compute how well a candidate's languages match offer requirements."""
         candidate_languages = self._candidate_languages(candidate)
         required_languages = self._offer_languages(offer)
         
@@ -299,6 +325,7 @@ class MatchingService:
         return len(matches) / len(required_languages)
 
     def _candidate_languages(self, candidate) -> set[str]:
+        """Return normalized languages present on the candidate profile."""
         normalized: set[str] = set()
         for language in getattr(candidate, "languages", []) or []:
             name = self._normalize(getattr(language, "language", None))
@@ -309,6 +336,7 @@ class MatchingService:
         return normalized
 
     def _offer_languages(self, offer) -> set[str]:
+        """Identify languages mentioned on the offer."""
         normalized: set[str] = set()
         for tag in getattr(offer, "tags", []) or []:
             name = self._normalize(getattr(tag, "name", None))
@@ -335,6 +363,7 @@ class MatchingService:
 
     # --- salary fit ---
     def _salary_fit(self, candidate, offer) -> float:
+        """Compare salary expectations to offer salary range."""
         expectation = self._parse_salary_expectation(candidate)
         offer_min, offer_max = self._parse_salary_range(getattr(offer, "salary", None))
         if expectation is None or (offer_min is None and offer_max is None):
@@ -353,6 +382,7 @@ class MatchingService:
         return max(0.0, 1.0 - diff_ratio)
 
     def _parse_salary_expectation(self, candidate) -> float | None:
+        """Extract a float value from salary expectations."""
         pref = getattr(candidate, "job_preferences", None)
         if pref is None:
             return None
@@ -370,6 +400,7 @@ class MatchingService:
 
     @staticmethod
     def _parse_salary_range(raw_value: str | None) -> tuple[float | None, float | None]:
+        """Parse a salary string and return min/max floats."""
         if not raw_value:
             return (None, None)
         digits = re.findall(r"\d+(?:[.,]\d+)?", raw_value.replace(" ", ""))
@@ -386,3 +417,33 @@ class MatchingService:
             return (values[0], None)
         first, second = values[:2]
         return (min(first, second), max(first, second))
+
+    # --- candidate helpers for responses ---
+    def _candidate_public_name(self, candidate) -> str:
+        """Return a display-friendly full name for the candidate."""
+        first = (getattr(candidate, "first_name", "") or "").strip()
+        last = (getattr(candidate, "last_name", "") or "").strip()
+        full_name = f"{first} {last}".strip()
+        if full_name:
+            return full_name
+        fallback = getattr(candidate, "professional_title", None)
+        return fallback or "Profil anonyme"
+
+    def _candidate_location(self, candidate) -> str | None:
+        """Return the most specific known candidate location."""
+        city = getattr(candidate, "city", None)
+        region = getattr(candidate, "region", None)
+        country = getattr(candidate, "country", None)
+        for part in (city, region, country):
+            if part:
+                return part
+        return None
+
+    def _candidate_skill_names(self, candidate) -> list[str]:
+        """Return human-readable candidate skill names."""
+        names: list[str] = []
+        for skill in getattr(candidate, "skills", []) or []:
+            title = getattr(skill, "name", None)
+            if title:
+                names.append(title)
+        return names

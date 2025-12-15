@@ -11,10 +11,12 @@ class UserRepository:
     """Minimal data access helpers for user entities."""
 
     def __init__(self, db: Session):
+        """Store SQLAlchemy session for reuse."""
         self.db = db
 
-    def get_candidate_by_user_id(self, user_id: UUID) -> Candidate | None:
-        user = (
+    def _query(self):
+        """Return base query for users with joined candidate relationships."""
+        return (
             self.db.query(User)
             .options(
                 selectinload(User.candidate)
@@ -28,12 +30,15 @@ class UserRepository:
                 selectinload(User.candidate)
                 .selectinload(Candidate.job_preferences),
             )
-            .filter(User.id == user_id)
-            .first()
         )
+
+    def get_candidate_by_user_id(self, user_id: UUID) -> Candidate | None:
+        """Return the candidate tied to the provided user id."""
+        user = self._query().filter(User.id == user_id).first()
         if user is None:
             return None
         return user.candidate
     
     def get(self, user_id: UUID) -> User | None:
-        return self._query().filter(User.id == user_id).first()
+        """Fetch a raw user entity by identifier."""
+        return self.db.query(User).filter(User.id == user_id).first()

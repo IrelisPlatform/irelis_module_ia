@@ -17,6 +17,7 @@ router = APIRouter()
 def list_candidates(
     db: Annotated[Session, Depends(deps.get_db)],
 ) -> list[CandidateRead]:
+    """Return every candidate profile."""
     return CandidateService(db).list_candidates()
 
 
@@ -29,6 +30,7 @@ def get_candidate(
     candidate_id: UUID,
     db: Annotated[Session, Depends(deps.get_db)],
 ) -> CandidateRead:
+    """Fetch a single candidate by identifier."""
     candidate = CandidateService(db).get_candidate(candidate_id)
     if candidate is None:
         raise HTTPException(
@@ -46,6 +48,7 @@ def get_candidate_by_user(
     user_id: UUID,
     db: Annotated[Session, Depends(deps.get_db)],
 ) -> CandidateRead:
+    """Retrieve the candidate entity bound to a specific user account."""
     candidate = CandidateService(db).get_candidate_by_user(user_id)
     if candidate is None:
         raise HTTPException(

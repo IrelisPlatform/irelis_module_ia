@@ -16,6 +16,7 @@ router = APIRouter()
 
 @router.get("/recruiters", response_model=list[RecruiterRead], tags=["recruiters"])
 def list_recruiters(db: Annotated[Session, Depends(deps.get_db)]) -> list[RecruiterRead]:
+    """Return every recruiter profile with related metadata."""
     return RecruiterService(db).list_recruiters()
 
 
@@ -28,6 +29,7 @@ def get_recruiter(
     recruiter_id: UUID,
     db: Annotated[Session, Depends(deps.get_db)],
 ) -> RecruiterRead:
+    """Retrieve one recruiter by identifier."""
     recruiter = RecruiterService(db).get_recruiter(recruiter_id)
     if recruiter is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recruiter not found")
@@ -43,4 +45,5 @@ def list_offers_for_recruiter(
     recruiter_id: UUID,
     db: Annotated[Session, Depends(deps.get_db)],
 ) -> list[JobOfferRead]:
+    """Return all job offers owned by a recruiter."""
     return OfferService(db).list_by_recruiter(recruiter_id)
