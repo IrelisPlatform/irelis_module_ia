@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.api.v1 import deps
@@ -19,6 +19,37 @@ def list_candidates(
 ) -> list[CandidateRead]:
     """Return every candidate profile."""
     return CandidateService(db).list_candidates()
+
+
+@router.get(
+    "/recherche/bool",
+    response_model=list[CandidateRead],
+    tags=["candidats"],
+)
+def boolean_search_candidates(
+    db: Annotated[Session, Depends(deps.get_db)],
+    user_id: UUID = Query(..., description="Identifiant du recruteur"),
+    query: str = Query(..., min_length=1, description="Requête booléenne"),
+) -> list[CandidateRead]:
+    """Search candidates using boolean operators and nested expressions."""
+    service = CandidateService(db)
+    try:
+        return service.search_by_boolean_query(query=query, user_id=user_id)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+    except LookupError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
+    except PermissionError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(exc),
+        ) from exc
 
 
 # @router.get(

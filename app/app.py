@@ -22,7 +22,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# app.include_router(candidate_router.router, prefix="/api/v1/candidats")
+app.include_router(candidate_router.router, prefix="/api/v1/candidats")
 # app.include_router(recruiter_router.router, prefix="/api/v1")
 # app.include_router(offer_router.router, prefix="/api/v1")
 app.include_router(search_router.router, prefix="/api/v1")
