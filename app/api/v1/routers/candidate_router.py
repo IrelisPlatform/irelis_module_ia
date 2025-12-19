@@ -21,11 +21,11 @@ def list_candidates(
     return CandidateService(db).list_candidates()
 
 
-@router.get(
-    "/{candidate_id}",
-    response_model=CandidateRead,
-    tags=["candidats"],
-)
+# @router.get(
+#     "/{candidate_id}",
+#     response_model=CandidateRead,
+#     tags=["candidats"],
+# )
 def get_candidate(
     candidate_id: UUID,
     db: Annotated[Session, Depends(deps.get_db)],
@@ -39,11 +39,11 @@ def get_candidate(
         )
     return candidate
 
-@router.get(
-    "/by_user/{user_id}",
-    response_model=CandidateRead,
-    tags=["candidats"],
-)
+# @router.get(
+#     "/by_user/{user_id}",
+#     response_model=CandidateRead,
+#     tags=["candidats"],
+# )
 def get_candidate_by_user(
     user_id: UUID,
     db: Annotated[Session, Depends(deps.get_db)],
