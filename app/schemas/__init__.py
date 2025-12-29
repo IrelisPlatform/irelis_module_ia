@@ -5,6 +5,11 @@ from .entities import (
     CandidateRead,
     CandidateRecommendationsResponse,
     CandidatureInfoRead,
+    ChatbotFeedbackRead,
+    ChatbotFaqEntryRead,
+    ChatbotMessageRead,
+    ChatbotSessionRead,
+    ChatbotUnmatchedQuestionRead,
     EmailOtpRead,
     EducationRead,
     ExperienceRead,
@@ -28,6 +33,14 @@ from .entities import (
     UserRead,
     UserSessionRead,
 )
+from .chatbot import (
+    ChatbotFeedbackCreate,
+    ChatbotMessagesQuery,
+    ChatbotSendRequest,
+    ChatbotSendResponse,
+    ChatbotSessionClose,
+    ChatbotSessionInit,
+)
 
 __all__ = [
     "ApplicationDocumentRead",
@@ -36,6 +49,11 @@ __all__ = [
     "CandidateRead",
     "CandidateRecommendationsResponse",
     "CandidatureInfoRead",
+    "ChatbotFeedbackRead",
+    "ChatbotFaqEntryRead",
+    "ChatbotMessageRead",
+    "ChatbotSessionRead",
+    "ChatbotUnmatchedQuestionRead",
     "EmailOtpRead",
     "EducationRead",
     "ExperienceRead",
@@ -58,4 +76,10 @@ __all__ = [
     "SkillRead",
     "UserRead",
     "UserSessionRead",
+    "ChatbotFeedbackCreate",
+    "ChatbotMessagesQuery",
+    "ChatbotSendRequest",
+    "ChatbotSendResponse",
+    "ChatbotSessionClose",
+    "ChatbotSessionInit",
 ]

@@ -2,6 +2,7 @@
 
 from . import (
     candidate_router,
+    chatbot_router,
     matching_router,
     offer_router,
     recruiter_router,
@@ -11,6 +12,7 @@ from . import (
 
 __all__ = [
     "candidate_router",
+    "chatbot_router",
     "matching_router",
     "recruiter_router",
     "offer_router",

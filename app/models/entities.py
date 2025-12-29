@@ -11,9 +11,13 @@ from sqlalchemy import (
     Float,
     ForeignKey,
     Integer,
+    Index,
+    SmallInteger,
     String,
+    Text,
+    text,
 )
-from sqlalchemy.dialects.postgresql import UUID, OID
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID, OID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -34,6 +38,11 @@ from app.models.enums import (
     UserType,
     SearchTarget,
     SearchType,
+    ChatbotChannel,
+    ChatbotMessageType,
+    ChatbotSessionState,
+    ChatbotUnmatchedReason,
+    ChatbotUnmatchedStatus,
 )
 
 
@@ -56,6 +65,12 @@ class User(Base):
     recruiter = relationship("Recruiter", back_populates="user", uselist=False)
     sessions = relationship("UserSession", back_populates="user")
     searches = relationship("Search", back_populates="user")
+    chatbot_sessions = relationship("ChatbotSession", back_populates="user")
+    chatbot_messages = relationship("ChatbotMessage", back_populates="user")
+    chatbot_feedback = relationship("ChatbotFeedback", back_populates="user")
+    chatbot_unmatched_questions = relationship(
+        "ChatbotUnmatchedQuestion", back_populates="user"
+    )
 
 
 class Candidate(Base):
@@ -540,3 +555,216 @@ class UserSession(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
 
     user = relationship("User", back_populates="sessions")
+
+
+class ChatbotSession(Base):
+    __tablename__ = "chatbot_sessions"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), index=True)
+    state = Column(
+        Enum(
+            ChatbotSessionState,
+            name="chatbot_session_state_enum",
+            native_enum=False,
+        ),
+        nullable=False,
+        default=ChatbotSessionState.CURRENT,
+    )
+    channel = Column(
+        Enum(ChatbotChannel, name="chatbot_channel_enum", native_enum=False),
+        nullable=False,
+    )
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    ended_at = Column(DateTime(timezone=True))
+    last_activity_at = Column(DateTime(timezone=True))
+    metadata_ = Column("metadata", JSONB)
+
+    user = relationship("User", back_populates="chatbot_sessions")
+    messages = relationship("ChatbotMessage", back_populates="session")
+    unmatched_questions = relationship(
+        "ChatbotUnmatchedQuestion", back_populates="session"
+    )
+    feedback = relationship("ChatbotFeedback", back_populates="session")
+
+    __table_args__ = (
+        Index(
+            "ix_chatbot_sessions_current_user_channel",
+            "user_id",
+            "channel",
+            unique=True,
+            postgresql_where=text("state = 'current'"),
+        ),
+    )
+
+
+class ChatbotFaqEntry(Base):
+    __tablename__ = "chatbot_faq_entries"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    question = Column(Text, nullable=False)
+    answer = Column(Text, nullable=False)
+    category = Column(String(255))
+    lang = Column(String(10))
+    keywords = Column(ARRAY(String(255)))
+    is_active = Column(Boolean, nullable=False, default=True)
+    source = Column(String(255))
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    version = Column(Integer, nullable=False, default=1)
+
+    messages = relationship("ChatbotMessage", back_populates="faq_entry")
+    feedback = relationship("ChatbotFeedback", back_populates="faq_entry")
+    unmatched_questions = relationship(
+        "ChatbotUnmatchedQuestion", back_populates="resolved_faq_entry"
+    )
+
+
+class ChatbotMessage(Base):
+    __tablename__ = "chatbot_messages"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    session_id = Column(
+        UUID(as_uuid=True), ForeignKey("chatbot_sessions.id"), index=True
+    )
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), index=True)
+    content = Column(Text, nullable=False)
+    type = Column(
+        Enum(
+            ChatbotMessageType,
+            name="chatbot_message_type_enum",
+            native_enum=False,
+        ),
+        nullable=False,
+    )
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    channel = Column(
+        Enum(ChatbotChannel, name="chatbot_message_channel_enum", native_enum=False)
+    )
+    lang = Column(String(10))
+    token = Column(String(255))
+    faq_entry_id = Column(
+        UUID(as_uuid=True), ForeignKey("chatbot_faq_entries.id")
+    )
+    confidence = Column(Float)
+    handoff = Column(Boolean, nullable=False, default=False)
+
+    session = relationship("ChatbotSession", back_populates="messages")
+    user = relationship("User", back_populates="chatbot_messages")
+    faq_entry = relationship("ChatbotFaqEntry", back_populates="messages")
+    unmatched_question = relationship(
+        "ChatbotUnmatchedQuestion",
+        back_populates="request_message",
+        uselist=False,
+    )
+    feedback = relationship(
+        "ChatbotFeedback", back_populates="response_message", uselist=False
+    )
+
+    __table_args__ = (
+        Index(
+            "ix_chatbot_messages_session_created_at",
+            "session_id",
+            "created_at",
+        ),
+        Index(
+            "ix_chatbot_messages_user_created_at",
+            "user_id",
+            "created_at",
+        ),
+    )
+
+
+class ChatbotUnmatchedQuestion(Base):
+    __tablename__ = "chatbot_unmatched_questions"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), index=True)
+    session_id = Column(
+        UUID(as_uuid=True), ForeignKey("chatbot_sessions.id"), index=True
+    )
+    request_message_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("chatbot_messages.id"),
+        unique=True,
+        nullable=False,
+    )
+    content = Column(Text, nullable=False)
+    lang = Column(String(10))
+    channel = Column(
+        Enum(
+            ChatbotChannel,
+            name="chatbot_unmatched_channel_enum",
+            native_enum=False,
+        )
+    )
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    top_candidates = Column(JSONB)
+    reason = Column(
+        Enum(
+            ChatbotUnmatchedReason,
+            name="chatbot_unmatched_reason_enum",
+            native_enum=False,
+        )
+    )
+    status = Column(
+        Enum(
+            ChatbotUnmatchedStatus,
+            name="chatbot_unmatched_status_enum",
+            native_enum=False,
+        ),
+        nullable=False,
+        default=ChatbotUnmatchedStatus.NEW,
+    )
+    reviewed_at = Column(DateTime(timezone=True))
+    resolved_faq_entry_id = Column(
+        UUID(as_uuid=True), ForeignKey("chatbot_faq_entries.id")
+    )
+
+    user = relationship("User", back_populates="chatbot_unmatched_questions")
+    session = relationship("ChatbotSession", back_populates="unmatched_questions")
+    request_message = relationship(
+        "ChatbotMessage", back_populates="unmatched_question"
+    )
+    resolved_faq_entry = relationship(
+        "ChatbotFaqEntry", back_populates="unmatched_questions"
+    )
+
+
+class ChatbotFeedback(Base):
+    __tablename__ = "chatbot_feedback"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), index=True)
+    session_id = Column(
+        UUID(as_uuid=True), ForeignKey("chatbot_sessions.id"), index=True
+    )
+    response_message_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("chatbot_messages.id"),
+        unique=True,
+        nullable=False,
+    )
+    faq_entry_id = Column(
+        UUID(as_uuid=True), ForeignKey("chatbot_faq_entries.id")
+    )
+    rating = Column(SmallInteger, nullable=False)
+    comment = Column(Text)
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    user = relationship("User", back_populates="chatbot_feedback")
+    session = relationship("ChatbotSession", back_populates="feedback")
+    response_message = relationship(
+        "ChatbotMessage", back_populates="feedback"
+    )
+    faq_entry = relationship("ChatbotFaqEntry", back_populates="feedback")

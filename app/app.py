@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.routers import (
     candidate_router,
+    chatbot_router,
     matching_router,
     offer_router,
     recruiter_router,
@@ -28,6 +29,7 @@ app.include_router(candidate_router.router, prefix="/api/v1/candidats")
 app.include_router(search_router.router, prefix="/api/v1")
 app.include_router(matching_router.router, prefix="/api/v1")
 app.include_router(sourcing_router.router, prefix="/api/v1")
+app.include_router(chatbot_router.router, prefix="/api/v1")
 
 
 @app.on_event("startup")

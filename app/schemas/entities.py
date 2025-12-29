@@ -21,6 +21,11 @@ from app.models.enums import (
     UserType,
     SearchTarget,
     SearchType,
+    ChatbotChannel,
+    ChatbotMessageType,
+    ChatbotSessionState,
+    ChatbotUnmatchedReason,
+    ChatbotUnmatchedStatus,
 )
 
 
@@ -416,6 +421,88 @@ class UserSessionRead(BaseModel):
     user_id: UUID | None = None
     created_at: datetime
     updated_at: datetime | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class ChatbotSessionRead(BaseModel):
+    id: UUID
+    user_id: UUID | None = None
+    state: ChatbotSessionState
+    channel: ChatbotChannel
+    created_at: datetime
+    ended_at: datetime | None = None
+    last_activity_at: datetime | None = None
+    metadata_: dict | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class ChatbotFaqEntryRead(BaseModel):
+    id: UUID
+    question: str
+    answer: str
+    category: str | None = None
+    lang: str | None = None
+    keywords: list[str] | None = None
+    is_active: bool
+    source: str | None = None
+    created_at: datetime
+    updated_at: datetime | None = None
+    version: int
+
+    class Config:
+        from_attributes = True
+
+
+class ChatbotMessageRead(BaseModel):
+    id: UUID
+    session_id: UUID | None = None
+    user_id: UUID | None = None
+    content: str
+    type: ChatbotMessageType
+    created_at: datetime
+    channel: ChatbotChannel | None = None
+    lang: str | None = None
+    token: str | None = None
+    faq_entry_id: UUID | None = None
+    confidence: float | None = None
+    handoff: bool
+
+    class Config:
+        from_attributes = True
+
+
+class ChatbotUnmatchedQuestionRead(BaseModel):
+    id: UUID
+    user_id: UUID | None = None
+    session_id: UUID | None = None
+    request_message_id: UUID
+    content: str
+    lang: str | None = None
+    channel: ChatbotChannel | None = None
+    created_at: datetime
+    top_candidates: dict | None = None
+    reason: ChatbotUnmatchedReason | None = None
+    status: ChatbotUnmatchedStatus
+    reviewed_at: datetime | None = None
+    resolved_faq_entry_id: UUID | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class ChatbotFeedbackRead(BaseModel):
+    id: UUID
+    user_id: UUID | None = None
+    session_id: UUID | None = None
+    response_message_id: UUID
+    faq_entry_id: UUID | None = None
+    rating: int
+    comment: str | None = None
+    created_at: datetime
 
     class Config:
         from_attributes = True

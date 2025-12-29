@@ -107,3 +107,33 @@ class SearchType(str, Enum):
 class SearchTarget(str, Enum):
     OFFRE = "OFFRE"
     CANDIDAT = "CANDIDAT"
+
+
+class ChatbotSessionState(str, Enum):
+    CURRENT = "current"
+    CLOSED = "closed"
+
+
+class ChatbotChannel(str, Enum):
+    WEB = "web"
+    WHATSAPP = "whatsapp"
+    TELEGRAM = "telegram"
+
+
+class ChatbotMessageType(str, Enum):
+    REQUEST = "request"
+    RESPONSE = "response"
+    SYSTEM = "system"
+
+
+class ChatbotUnmatchedReason(str, Enum):
+    NO_MATCH = "no_match"
+    LOW_CONFIDENCE = "low_confidence"
+    BLOCKED = "blocked"
+
+
+class ChatbotUnmatchedStatus(str, Enum):
+    NEW = "new"
+    REVIEWED = "reviewed"
+    FAQ_CREATED = "faq_created"
+    IGNORED = "ignored"
