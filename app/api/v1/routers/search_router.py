@@ -66,7 +66,7 @@ def search_offers(
     filters: SearchFilters,
     user_id: UUID | None = Query(default=None),
     page: int = Query(default=0, ge=0),
-    size: int = Query(default=0, ge=0),
+    size: int = Query(default=10, ge=1),
 ) -> JobOfferSearchResponse:
     """Search job offers by payload or contextually for a candidate."""
     
