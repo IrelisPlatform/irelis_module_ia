@@ -79,7 +79,6 @@ def apply_text_search(query, raw_terms):
         search_clauses.append(
             or_(
                 JobOffer.title.ilike(like_term),
-                JobOffer.description.ilike(like_term),
                 JobOffer.tags.any(Tag.name.ilike(like_term)),
             )
         )

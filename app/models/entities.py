@@ -57,9 +57,13 @@ class User(Base):
     email = Column(String(255), nullable=False, unique=True)
     email_verified_at = Column(DateTime(timezone=False))
     password = Column(String(255))
-    provider = Column(Enum(Provider, name="provider_enum"), nullable=False)
-    role = Column(Enum(UserRole, name="user_role_enum"), nullable=False)
-    user_type = Column(Enum(UserType, name="user_type_enum"))
+    provider = Column(
+        Enum(Provider, name="provider_enum", native_enum=False), nullable=False
+    )
+    role = Column(
+        Enum(UserRole, name="user_role_enum", native_enum=False), nullable=False
+    )
+    user_type = Column(Enum(UserType, name="user_type_enum", native_enum=False))
 
     candidate = relationship("Candidate", back_populates="user", uselist=False)
     recruiter = relationship("Recruiter", back_populates="user", uselist=False)
@@ -84,7 +88,11 @@ class Candidate(Base):
     completion_rate = Column(Float)
     cv_url = Column(String(255))
     experience_level = Column(
-        Enum(ExperienceLevel, name="candidate_experience_level_enum")
+        Enum(
+            ExperienceLevel,
+            name="candidate_experience_level_enum",
+            native_enum=False,
+        )
     )
     first_name = Column(String(255))
     is_visible = Column(Boolean)
@@ -103,7 +111,7 @@ class Candidate(Base):
     presentation = Column(String(255))
     professional_title = Column(String(255))
     school_level = Column(
-        Enum(SchoolLevel, name="candidate_school_level_enum")
+        Enum(SchoolLevel, name="candidate_school_level_enum", native_enum=False)
     )
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
 
@@ -166,7 +174,7 @@ class Skill(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    level = Column(Enum(SkillLevel, name="skill_level_enum"))
+    level = Column(Enum(SkillLevel, name="skill_level_enum", native_enum=False))
     name = Column(String(255))
     candidate_id = Column(
         UUID(as_uuid=True), ForeignKey("candidates.id"), nullable=False
@@ -184,7 +192,7 @@ class Language(Base):
     )
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     language = Column(String(255))
-    level = Column(Enum(LanguageLevel, name="language_level_enum"))
+    level = Column(Enum(LanguageLevel, name="language_level_enum", native_enum=False))
     candidate_id = Column(
         UUID(as_uuid=True), ForeignKey("candidates.id"), nullable=False
     )
@@ -230,7 +238,8 @@ class JobPreferencesContractType(Base):
         UUID(as_uuid=True), ForeignKey("job_preferences.id"), primary_key=True
     )
     contract_type = Column(
-        Enum(ContractType, name="job_preferences_contract_enum"), primary_key=True
+        Enum(ContractType, name="job_preferences_contract_enum", native_enum=False),
+        primary_key=True,
     )
 
     job_preferences = relationship(
@@ -279,9 +288,9 @@ class Recruiter(Base):
         DateTime(timezone=False), server_default=func.now(), nullable=False
     )
     updated_at = Column(DateTime(timezone=False), onupdate=func.now())
-    company_description = Column(String(255))
+    company_description = Column(OID)
     company_email = Column(String(255))
-    company_length = Column(Integer)
+    company_length = Column(String(255))
     company_linked_in_url = Column(String(255))
     company_logo_url = Column(String(255))
     company_name = Column(String(255))
@@ -312,24 +321,23 @@ class JobOffer(Base):
         DateTime(timezone=False), server_default=func.now(), nullable=False
     )
     updated_at = Column(DateTime(timezone=False), onupdate=func.now())
-    contract_type = Column(Enum(ContractType, name="job_offer_contract_enum"))
-    description = Column(String(255))
+    contract_type = Column(
+        Enum(ContractType, name="job_offer_contract_enum", native_enum=False)
+    )
+    description = Column(OID)
     expiration_date = Column(DateTime(timezone=False))
     instructions = Column(String(255))
     is_featured = Column(Boolean)
     is_urgent = Column(Boolean)
-    job_type = Column(Enum(JobType, name="job_offer_type_enum"))
+    job_type = Column(Enum(JobType, name="job_offer_type_enum", native_enum=False))
     post_number = Column(Integer)
     published_at = Column(DateTime(timezone=False))
-    required_language = Column(String(255))
+    reject_reason = Column(String(255))
+    rejected_at = Column(DateTime(timezone=False))
     salary = Column(String(255))
     status = Column(Enum(JobOfferStatus, native_enum=False))
     title = Column(String(255))
-    work_city_location = Column(String(255))
     work_country_location = Column(String(255))
-    benefits = Column(OID)
-    requirements = Column(OID)
-    responsibilities = Column(OID)
     company_id = Column(
         UUID(as_uuid=True), ForeignKey("recruiters.id"), nullable=False
     )
@@ -337,6 +345,16 @@ class JobOffer(Base):
     recruiter = relationship("Recruiter", back_populates="job_offers")
     applications = relationship(
         "Application", back_populates="job_offer", cascade="all, delete-orphan"
+    )
+    cities = relationship(
+        "JobOfferCity",
+        back_populates="job_offer",
+        cascade="all, delete-orphan",
+    )
+    languages = relationship(
+        "JobOfferLanguage",
+        back_populates="job_offer",
+        cascade="all, delete-orphan",
     )
     saved_by = relationship(
         "SavedJobOffer", back_populates="job_offer", cascade="all, delete-orphan"
@@ -375,6 +393,28 @@ class JobOfferTag(Base):
     tag = relationship("Tag", back_populates="job_offer_links", overlaps="tags")
 
 
+class JobOfferCity(Base):
+    __tablename__ = "job_offer_cities"
+
+    job_offer_id = Column(
+        UUID(as_uuid=True), ForeignKey("job_offer.id"), primary_key=True
+    )
+    city = Column(String(255), primary_key=True)
+
+    job_offer = relationship("JobOffer", back_populates="cities")
+
+
+class JobOfferLanguage(Base):
+    __tablename__ = "job_offer_languages"
+
+    job_offer_id = Column(
+        UUID(as_uuid=True), ForeignKey("job_offer.id"), primary_key=True
+    )
+    language = Column(String(255), primary_key=True)
+
+    job_offer = relationship("JobOffer", back_populates="languages")
+
+
 class Tag(Base):
     __tablename__ = "tag"
 
@@ -410,7 +450,9 @@ class Application(Base):
     updated_at = Column(DateTime(timezone=False), onupdate=func.now())
     applied_at = Column(DateTime(timezone=False))
     message = Column(String(255))
-    status = Column(Enum(ApplicationStatus, name="application_status_enum"))
+    status = Column(
+        Enum(ApplicationStatus, name="application_status_enum", native_enum=False)
+    )
     candidate_id = Column(
         UUID(as_uuid=True), ForeignKey("candidates.id"), nullable=False
     )
@@ -536,7 +578,7 @@ class EmailOtp(Base):
     email = Column(String(255), nullable=False)
     expires_at = Column(DateTime(timezone=True), nullable=False)
     purpose = Column(Enum(OtpPurpose, native_enum=False), nullable=False)
-    user_type = Column(Enum(UserType, name="email_otp_user_type_enum"))
+    user_type = Column(Enum(UserType, name="email_otp_user_type_enum", native_enum=False))
 
 
 class UserSession(Base):

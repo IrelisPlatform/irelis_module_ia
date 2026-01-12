@@ -7,30 +7,30 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.api.v1 import deps
-from app.schemas import CandidateRead
+from app.schemas import CandidateDto
 from app.services.candidate_service import CandidateService
 
 router = APIRouter()
 
 
-@router.get("", response_model=list[CandidateRead], tags=["candidats"])
+@router.get("", response_model=list[CandidateDto], tags=["candidats"])
 def list_candidates(
     db: Annotated[Session, Depends(deps.get_db)],
-) -> list[CandidateRead]:
+) -> list[CandidateDto]:
     """Return every candidate profile."""
     return CandidateService(db).list_candidates()
 
 
 @router.get(
     "/recherche/bool",
-    response_model=list[CandidateRead],
+    response_model=list[CandidateDto],
     tags=["candidats"],
 )
 def boolean_search_candidates(
     db: Annotated[Session, Depends(deps.get_db)],
     user_id: UUID = Query(..., description="Identifiant du recruteur"),
     query: str = Query(..., min_length=1, description="Requête booléenne"),
-) -> list[CandidateRead]:
+) -> list[CandidateDto]:
     """Search candidates using boolean operators and nested expressions."""
     service = CandidateService(db)
     try:
@@ -60,7 +60,7 @@ def boolean_search_candidates(
 def get_candidate(
     candidate_id: UUID,
     db: Annotated[Session, Depends(deps.get_db)],
-) -> CandidateRead:
+) -> CandidateDto:
     """Fetch a single candidate by identifier."""
     candidate = CandidateService(db).get_candidate(candidate_id)
     if candidate is None:
@@ -78,7 +78,7 @@ def get_candidate(
 def get_candidate_by_user(
     user_id: UUID,
     db: Annotated[Session, Depends(deps.get_db)],
-) -> CandidateRead:
+) -> CandidateDto:
     """Retrieve the candidate entity bound to a specific user account."""
     candidate = CandidateService(db).get_candidate_by_user(user_id)
     if candidate is None:

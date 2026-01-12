@@ -67,6 +67,7 @@ class JobOfferStatus(str, Enum):
     PENDING = "PENDING"
     PUBLISHED = "PUBLISHED"
     EXPIRED = "EXPIRED"
+    REJECTED = "REJECTED"
     CLOSED = "CLOSED"
 
 

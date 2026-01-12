@@ -13,10 +13,11 @@ from app.schemas import (
     CandidateMatch,
     CandidateRecommendationsResponse,
     JobOfferMatch,
-    JobOfferRead,
+    JobOfferDto,
     MatchingScoreResponse,
     SourcingSearchResponse,
 )
+from app.services.dto_mappers import offer_to_dto
 
 
 LANGUAGE_ALIASES = {
@@ -129,7 +130,7 @@ class MatchingService:
             score, matched_skills = self._score_candidate(candidate, offer)
             ranked_offers.append(
                 JobOfferMatch(
-                    offer=JobOfferRead.model_validate(offer),
+                    offer=offer_to_dto(offer),
                     score=round(score, 4),
                     matched_skills=matched_skills,
                 )
@@ -258,8 +259,11 @@ class MatchingService:
     def _geo_fit(self, candidate, offer) -> float:
         """Evaluate geographic compatibility between candidate and offer."""
         offer_country = self._normalize(getattr(offer, "work_country_location", None))
-        
-        offer_city = self._normalize(getattr(offer, "work_city_location", None))
+        offer_cities = {
+            self._normalize(getattr(city, "city", None))
+            for city in getattr(offer, "cities", []) or []
+        }
+        offer_cities.discard(None)
 
         pref = getattr(candidate, "job_preferences", None)
         cand_country = self._normalize(getattr(pref, "country", None)) or self._normalize(
@@ -272,7 +276,7 @@ class MatchingService:
             getattr(candidate, "city", None)
         )
         score = 0.0
-        if offer_city and cand_city and offer_city.lower() == cand_city.lower():
+        if cand_city and cand_city in offer_cities:
             score = 1.0
         elif offer_country and cand_country and offer_country.lower() == cand_country.lower():
             score = 0.5
@@ -301,7 +305,10 @@ class MatchingService:
             if mapped:
                 return mapped
 
-        for text in (getattr(offer, "title", None), getattr(offer, "description", None)):
+        for text in (
+            getattr(offer, "title", None),
+            getattr(offer, "instructions", None),
+        ):
             if not text:
                 continue
             for token in self._tokenize(text):
@@ -346,13 +353,15 @@ class MatchingService:
             if code:
                 normalized.add(code)
 
-        explicit_required = self._normalize(getattr(offer, "required_language", None))
-        if explicit_required:
-            normalized.add(LANGUAGE_ALIASES.get(explicit_required, explicit_required))
+        for entry in getattr(offer, "languages", []) or []:
+            name = self._normalize(getattr(entry, "language", None))
+            if not name:
+                continue
+            normalized.add(LANGUAGE_ALIASES.get(name, name))
 
-        description = getattr(offer, "description", None)
         title = getattr(offer, "title", None)
-        for text in (description, title):
+        instructions = getattr(offer, "instructions", None)
+        for text in (title, instructions):
             if not text:
                 continue
             for token in self._tokenize(text):

@@ -145,7 +145,7 @@ def test_search_offers_without_user() -> None:
     client = TestClient(app)
     response = client.get("/api/v1/recherches/offres")
     assert response.status_code == 200
-    assert response.json()[0]["id"] == "cccccccc-cccc-cccc-cccc-cccccccccccc"
+    assert response.json()["content"][0]["id"] == "cccccccc-cccc-cccc-cccc-cccccccccccc"
 
 
 def test_search_offers_with_user() -> None:
@@ -155,7 +155,7 @@ def test_search_offers_with_user() -> None:
         params={"user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"},
     )
     assert response.status_code == 200
-    assert response.json()[0]["id"] == "cccccccc-cccc-cccc-cccc-cccccccccccc"
+    assert response.json()["content"][0]["id"] == "cccccccc-cccc-cccc-cccc-cccccccccccc"
 
 
 def test_matching_score() -> None:

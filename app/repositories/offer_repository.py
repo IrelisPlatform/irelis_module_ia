@@ -4,7 +4,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session, selectinload
 
-from app.models import JobOffer
+from app.models import JobOffer, Recruiter
 
 
 class OfferRepository:
@@ -17,9 +17,11 @@ class OfferRepository:
     def _query(self):
         """Base query selecting the relationships required by services."""
         return self.db.query(JobOffer).options(
-            selectinload(JobOffer.recruiter),
+            selectinload(JobOffer.recruiter).selectinload(Recruiter.sector),
             selectinload(JobOffer.applications),
             selectinload(JobOffer.tags),
+            selectinload(JobOffer.cities),
+            selectinload(JobOffer.languages),
             selectinload(JobOffer.required_documents),
             selectinload(JobOffer.candidature_info),
         )

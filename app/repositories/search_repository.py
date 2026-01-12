@@ -6,7 +6,15 @@ from uuid import UUID
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, selectinload
 
-from app.models import Candidate, JobOffer, Search, Tag
+from app.models import (
+    Candidate,
+    JobOffer,
+    JobOfferCity,
+    JobOfferLanguage,
+    Recruiter,
+    Search,
+    Tag,
+)
 from app.models.enums import SearchTarget, SearchType
 from app.utils.search_filters import (
     apply_text_search,
@@ -31,9 +39,11 @@ class SearchRepository:
     def _query(self):
         """Base query returning offers with needed relationships."""
         return self.db.query(JobOffer).options(
-            selectinload(JobOffer.recruiter),
+            selectinload(JobOffer.recruiter).selectinload(Recruiter.sector),
             selectinload(JobOffer.applications),
             selectinload(JobOffer.tags),
+            selectinload(JobOffer.cities),
+            selectinload(JobOffer.languages),
         )
 
     def search_for_candidate(
@@ -79,7 +89,11 @@ class SearchRepository:
             city = candidate.city
         if city:
             normalized_city = normalize(city)
-            query = query.filter(func.lower(JobOffer.work_city_location) == normalized_city)
+            query = query.filter(
+                JobOffer.cities.any(
+                    func.lower(JobOfferCity.city) == normalized_city
+                )
+            )
 
         skill_names = filters.get("skills")
         if not skill_names:
@@ -104,8 +118,9 @@ class SearchRepository:
             query = query.filter(
                 or_(
                     JobOffer.title.ilike(like_language),
-                    JobOffer.description.ilike(like_language),
-                    JobOffer.required_language.ilike(like_language),
+                    JobOffer.languages.any(
+                        JobOfferLanguage.language.ilike(like_language)
+                    ),
                 )
             )
 
@@ -126,7 +141,11 @@ class SearchRepository:
         city = getattr(payload, "city", None)
         if city:
             normalized_city = normalize(city)
-            query = query.filter(func.lower(JobOffer.work_city_location) == normalized_city)
+            query = query.filter(
+                JobOffer.cities.any(
+                    func.lower(JobOfferCity.city) == normalized_city
+                )
+            )
 
         contract_type = getattr(payload, "type_contrat", None) or getattr(payload, "contract_type", None)
         contract_values = as_list(contract_type)
@@ -139,8 +158,9 @@ class SearchRepository:
             query = query.filter(
                 or_(
                     JobOffer.title.ilike(like_language),
-                    JobOffer.description.ilike(like_language),
-                    JobOffer.required_language.ilike(like_language),
+                    JobOffer.languages.any(
+                        JobOfferLanguage.language.ilike(like_language)
+                    ),
                 )
             )
 

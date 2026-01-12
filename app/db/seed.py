@@ -16,6 +16,8 @@ from app.models import (
     EmailOtp,
     Experience,
     JobOffer,
+    JobOfferCity,
+    JobOfferLanguage,
     JobOfferTag,
     JobPreferences,
     JobPreferencesContractType,
@@ -318,6 +320,8 @@ def clear_tables(db: Session) -> None:
     """Truncate or delete existing data to reset the database."""
     models = [
         JobOfferTag,
+        JobOfferCity,
+        JobOfferLanguage,
         RequiredDocument,
         CandidatureInfo,
         SavedJobOffer,
@@ -398,9 +402,8 @@ def create_recruiters(db: Session, sectors: list[Sector]) -> tuple[list[Recruite
         db.flush()
 
         recruiter = Recruiter(
-            company_description=f"{company} accompagne les entreprises camerounaises.",
             company_email=f"contact@{company.lower().replace(' ', '')}.cm",
-            company_length=random.randint(25, 500),
+            company_length=str(random.randint(25, 500)),
             company_linked_in_url=f"https://www.linkedin.com/company/{company.lower().replace(' ', '')}",
             company_logo_url="https://placeholder.com/logo.png",
             company_name=company,
@@ -436,7 +439,6 @@ def create_job_offers(db: Session, recruiters: list[Recruiter], tags: list[Tag])
             language = random.choice(LANGUAGES)
             job = JobOffer(
                 contract_type=random.choice(list(ContractType)),
-                description=f"{recruiter.company_name} recrute un {random.choice(JOB_TITLES)} basé à {city}.",
                 expiration_date=datetime.utcnow() + timedelta(days=random.randint(30, 120)),
                 instructions="Envoyez votre dossier complet via le portail entreprise.",
                 is_featured=random.choice([True, False]),
@@ -444,16 +446,16 @@ def create_job_offers(db: Session, recruiters: list[Recruiter], tags: list[Tag])
                 job_type=random.choice(list(JobType)),
                 post_number=random.randint(1, 5),
                 published_at=datetime.utcnow() - timedelta(days=random.randint(0, 30)),
-                required_language=language,
                 salary=f"{min_salary} - {max_salary} XAF",
                 status=random.choice(list(JobOfferStatus)),
                 title=random.choice(JOB_TITLES),
-                work_city_location=city,
                 work_country_location="Cameroon",
                 company_id=recruiter.id,
                 created_at=datetime.utcnow(),
                 updated_at=datetime.utcnow(),
             )
+            job.cities.append(JobOfferCity(city=city))
+            job.languages.append(JobOfferLanguage(language=language))
             skill_choices = random.sample(tags, k=min(3, len(tags)))
             job.tags.extend(skill_choices)
             db.add(job)

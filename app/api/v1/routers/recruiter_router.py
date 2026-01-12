@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.v1 import deps
-from app.schemas import JobOfferRead, RecruiterRead
+from app.schemas import JobOfferDto, RecruiterRead
 from app.services.offer_service import OfferService
 from app.services.recruiter_service import RecruiterService
 
@@ -38,12 +38,12 @@ def get_recruiter(
 
 @router.get(
     "/recruiters/{recruiter_id}/offres",
-    response_model=list[JobOfferRead],
+    response_model=list[JobOfferDto],
     tags=["recruiters", "offres"],
 )
 def list_offers_for_recruiter(
     recruiter_id: UUID,
     db: Annotated[Session, Depends(deps.get_db)],
-) -> list[JobOfferRead]:
+) -> list[JobOfferDto]:
     """Return all job offers owned by a recruiter."""
     return OfferService(db).list_by_recruiter(recruiter_id)

@@ -5,6 +5,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field
 
+from app.schemas.dtos import JobOfferDto
+
 from app.models.enums import (
     ApplicationStatus,
     ContractType,
@@ -136,13 +138,23 @@ class SourcingSearchResponse(BaseModel):
 
 
 class JobOfferMatch(BaseModel):
-    offer: JobOfferRead
+    offer: JobOfferDto
     score: float
     matched_skills: list[str] = Field(default_factory=list)
 
 
 class CandidateRecommendationsResponse(BaseModel):
     offers: list[JobOfferMatch] = Field(default_factory=list)
+
+
+class JobOfferSearchResponse(BaseModel):
+    content: list[JobOfferDto] = Field(default_factory=list)
+    page: int
+    size: int
+    total_elements: int
+    total_pages: int
+    first: bool
+    last: bool
 
 
 class EducationRead(BaseModel):
@@ -314,9 +326,9 @@ class RecruiterRead(BaseModel):
     id: UUID
     created_at: datetime
     updated_at: datetime | None = None
-    company_description: str | None = None
+    company_description: int | None = None
     company_email: str | None = None
-    company_length: int | None = None
+    company_length: str | None = None
     company_linked_in_url: str | None = None
     company_logo_url: str | None = None
     company_name: str | None = None
@@ -339,7 +351,7 @@ class RecruiterRead(BaseModel):
 
 class JobOfferBase(BaseModel):
     contract_type: ContractType | None = None
-    description: str | None = None
+    description: int | None = None
     expiration_date: datetime | None = None
     instructions: str | None = None
     is_featured: bool | None = None
@@ -348,14 +360,27 @@ class JobOfferBase(BaseModel):
     post_number: int | None = None
     salary: str | None = None
     published_at: datetime | None = None
-    required_language: str | None = None
+    reject_reason: str | None = None
+    rejected_at: datetime | None = None
     status: JobOfferStatus | None = None
     title: str | None = None
-    work_city_location: str | None = None
     work_country_location: str | None = None
-    benefits: int | None = None
-    requirements: int | None = None
-    responsibilities: int | None = None
+
+
+class JobOfferCityRead(BaseModel):
+    job_offer_id: UUID
+    city: str | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class JobOfferLanguageRead(BaseModel):
+    job_offer_id: UUID
+    language: str | None = None
+
+    class Config:
+        from_attributes = True
 
 
 class CandidatureInfoRead(BaseModel):
@@ -391,6 +416,8 @@ class JobOfferRead(JobOfferBase):
     recruiter: RecruiterRead | None = None
     applications: list[ApplicationRead] = Field(default_factory=list)
     tags: list[TagRead] = Field(default_factory=list)
+    cities: list[JobOfferCityRead] = Field(default_factory=list)
+    languages: list[JobOfferLanguageRead] = Field(default_factory=list)
     candidature_info: CandidatureInfoRead | None = None
     required_documents: list[RequiredDocumentRead] = Field(default_factory=list)
 

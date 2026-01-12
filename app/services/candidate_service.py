@@ -9,7 +9,8 @@ from app.repositories.candidate_repository import CandidateRepository
 from app.repositories.recruiter_repository import RecruiterRepository
 from app.repositories.search_repository import SearchRepository
 from app.repositories.user_repository import UserRepository
-from app.schemas import CandidateRead, SearchCreate
+from app.schemas import CandidateDto, SearchCreate
+from app.services.dto_mappers import candidate_to_dto
 
 
 class CandidateService:
@@ -22,26 +23,26 @@ class CandidateService:
         self.recruiter_repo = RecruiterRepository(db)
         self.search_repo = SearchRepository(db)
 
-    def list_candidates(self) -> list[CandidateRead]:
+    def list_candidates(self) -> list[CandidateDto]:
         """Return all candidates mapped to read schemas."""
         candidates = self.repo.list()
-        return [CandidateRead.model_validate(candidate) for candidate in candidates]
+        return [candidate_to_dto(candidate) for candidate in candidates]
 
-    def get_candidate(self, candidate_id: UUID) -> CandidateRead | None:
+    def get_candidate(self, candidate_id: UUID) -> CandidateDto | None:
         """Retrieve a single candidate by identifier."""
         candidate = self.repo.get(candidate_id)
         if candidate is None:
             return None
-        return CandidateRead.model_validate(candidate)
+        return candidate_to_dto(candidate)
     
-    def get_candidate_by_user(self, user_id: UUID) -> CandidateRead | None:
+    def get_candidate_by_user(self, user_id: UUID) -> CandidateDto | None:
         """Return the candidate entity associated with a given user."""
         candidate = self.repo.get_by_user_id(user_id)
         if candidate is None:
             return None
-        return CandidateRead.model_validate(candidate)
+        return candidate_to_dto(candidate)
 
-    def search_by_boolean_query(self, query: str, user_id: UUID) -> list[CandidateRead]:
+    def search_by_boolean_query(self, query: str, user_id: UUID) -> list[CandidateDto]:
         """Execute a boolean search across candidate profiles."""
         user = self.user_repo.get(user_id)
         if user is None:
@@ -63,4 +64,4 @@ class CandidateService:
         )
         self.search_repo.record_search(user_id, payload)
 
-        return [CandidateRead.model_validate(candidate) for candidate in candidates]
+        return [candidate_to_dto(candidate) for candidate in candidates]
