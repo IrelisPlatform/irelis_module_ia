@@ -8,6 +8,7 @@ from app.repositories.search_repository import SearchRepository
 from app.repositories.user_repository import UserRepository
 from app.schemas import JobOfferDto, SearchCreate
 from app.services.dto_mappers import offer_to_dto
+from app.utils.cache import APP_CACHE, make_cache_key
 
 
 class SearchService:
@@ -20,8 +21,13 @@ class SearchService:
 
     def search_by_payload(self, payload: SearchCreate) -> list[JobOfferDto]:
         """Search offers with explicit payload filters."""
-        offers = self.repo.search_by_payload(payload)
-        return [offer_to_dto(offer) for offer in offers]
+        cache_key = make_cache_key("search:payload", payload)
+        found, cached = APP_CACHE.get(cache_key)
+        if found:
+            return cached
+        offers = [offer_to_dto(offer) for offer in self.repo.search_by_payload(payload)]
+        APP_CACHE.set(cache_key, offers)
+        return offers
 
 
     def search_for_candidate_by_user(
@@ -36,12 +42,24 @@ class SearchService:
             user = self.user_repo.get(user_id)
             if user is None: 
                 return None
-            else: 
-                offers = self.repo.search_by_payload(payload)
+            else:
+                cache_key = make_cache_key("search:by_user", user_id, payload=payload)
+                found, cached = APP_CACHE.get(cache_key)
+                if found:
+                    self.repo.record_search(user_id, payload)
+                    return cached
+                offers = [offer_to_dto(offer) for offer in self.repo.search_by_payload(payload)]
                 self.repo.record_search(user_id, payload)
-                return [offer_to_dto(offer) for offer in offers]
+                APP_CACHE.set(cache_key, offers)
+                return offers
 
         filters = payload.model_dump(exclude_none=True) if payload else None
-        offers = self.repo.search_for_candidate(candidate, filters)
+        cache_key = make_cache_key("search:by_candidate", user_id, filters=filters)
+        found, cached = APP_CACHE.get(cache_key)
+        if found:
+            self.repo.record_search(user_id, payload)
+            return cached
+        offers = [offer_to_dto(offer) for offer in self.repo.search_for_candidate(candidate, filters)]
         self.repo.record_search(user_id, payload)
-        return [offer_to_dto(offer) for offer in offers]
+        APP_CACHE.set(cache_key, offers)
+        return offers

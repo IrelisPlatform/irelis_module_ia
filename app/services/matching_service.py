@@ -18,6 +18,7 @@ from app.schemas import (
     SourcingSearchResponse,
 )
 from app.services.dto_mappers import offer_to_dto
+from app.utils.cache import APP_CACHE, make_cache_key
 
 
 LANGUAGE_ALIASES = {
@@ -79,13 +80,19 @@ class MatchingService:
         offer_id: UUID,
     ) -> MatchingScoreResponse | None:
         """Compute matching metrics for a candidate/offer pair."""
+        cache_key = make_cache_key("matching:score", candidate_id, offer_id)
+        found, cached = APP_CACHE.get(cache_key)
+        if found:
+            return cached
         candidate = self.candidates.get(candidate_id)
         offer = self.offers.get(offer_id)
         if candidate is None or offer is None:
             return None
 
         score, matched_skills = self._score_candidate(candidate, offer)
-        return MatchingScoreResponse(score=round(score, 4), matched_skills=matched_skills)
+        response = MatchingScoreResponse(score=round(score, 4), matched_skills=matched_skills)
+        APP_CACHE.set(cache_key, response)
+        return response
 
     def rank_candidates_for_offer(
         self,
@@ -93,6 +100,10 @@ class MatchingService:
         limit: int = 10,
     ) -> SourcingSearchResponse | None:
         """Rank candidates for a given offer and return a sourcing response."""
+        cache_key = make_cache_key("matching:rank_candidates", offer_id, limit=limit)
+        found, cached = APP_CACHE.get(cache_key)
+        if found:
+            return cached
         offer = self.offers.get(offer_id)
         if offer is None:
             return None
@@ -112,7 +123,9 @@ class MatchingService:
             )
 
         matches.sort(key=lambda match: match.score, reverse=True)
-        return SourcingSearchResponse(candidates=matches[:limit])
+        response = SourcingSearchResponse(candidates=matches[:limit])
+        APP_CACHE.set(cache_key, response)
+        return response
 
     def recommend_offers_for_candidate(
         self,
@@ -120,6 +133,10 @@ class MatchingService:
         limit: int = 10,
     ) -> CandidateRecommendationsResponse | None:
         """Rank offers for a candidate and return a recommendation payload."""
+        cache_key = make_cache_key("matching:recommend_offers", candidate_id, limit=limit)
+        found, cached = APP_CACHE.get(cache_key)
+        if found:
+            return cached
         candidate = self.candidates.get(candidate_id)
         if candidate is None:
             return None
@@ -137,7 +154,9 @@ class MatchingService:
             )
 
         ranked_offers.sort(key=lambda item: item.score, reverse=True)
-        return CandidateRecommendationsResponse(offers=ranked_offers[:limit])
+        response = CandidateRecommendationsResponse(offers=ranked_offers[:limit])
+        APP_CACHE.set(cache_key, response)
+        return response
 
     # ------------------------------------------------------------------
     # Component builders

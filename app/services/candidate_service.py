@@ -11,6 +11,7 @@ from app.repositories.search_repository import SearchRepository
 from app.repositories.user_repository import UserRepository
 from app.schemas import CandidateDto, SearchCreate
 from app.services.dto_mappers import candidate_to_dto
+from app.utils.cache import APP_CACHE, make_cache_key
 
 
 class CandidateService:
@@ -25,22 +26,35 @@ class CandidateService:
 
     def list_candidates(self) -> list[CandidateDto]:
         """Return all candidates mapped to read schemas."""
-        candidates = self.repo.list()
-        return [candidate_to_dto(candidate) for candidate in candidates]
+        cache_key = make_cache_key("candidates:list")
+        found, cached = APP_CACHE.get(cache_key)
+        if found:
+            return cached
+        candidates = [candidate_to_dto(candidate) for candidate in self.repo.list()]
+        APP_CACHE.set(cache_key, candidates)
+        return candidates
 
     def get_candidate(self, candidate_id: UUID) -> CandidateDto | None:
         """Retrieve a single candidate by identifier."""
+        cache_key = make_cache_key("candidates:get", candidate_id)
+        found, cached = APP_CACHE.get(cache_key)
+        if found:
+            return cached
         candidate = self.repo.get(candidate_id)
-        if candidate is None:
-            return None
-        return candidate_to_dto(candidate)
+        candidate_dto = candidate_to_dto(candidate) if candidate else None
+        APP_CACHE.set(cache_key, candidate_dto)
+        return candidate_dto
     
     def get_candidate_by_user(self, user_id: UUID) -> CandidateDto | None:
         """Return the candidate entity associated with a given user."""
+        cache_key = make_cache_key("candidates:get_by_user", user_id)
+        found, cached = APP_CACHE.get(cache_key)
+        if found:
+            return cached
         candidate = self.repo.get_by_user_id(user_id)
-        if candidate is None:
-            return None
-        return candidate_to_dto(candidate)
+        candidate_dto = candidate_to_dto(candidate) if candidate else None
+        APP_CACHE.set(cache_key, candidate_dto)
+        return candidate_dto
 
     def search_by_boolean_query(self, query: str, user_id: UUID) -> list[CandidateDto]:
         """Execute a boolean search across candidate profiles."""
@@ -54,14 +68,19 @@ class CandidateService:
                 "L'utilisateur n'est associé à aucun compte recruteur"
             )
 
-        candidates = self.repo.search_by_boolean_query(query)
-
         payload = SearchCreate(
             user_id=user_id,
             query=query,
             type=SearchType.BOOL,
             target=SearchTarget.CANDIDAT,
         )
-        self.search_repo.record_search(user_id, payload)
+        cache_key = make_cache_key("candidates:boolean_search", user_id, query=query)
+        found, cached = APP_CACHE.get(cache_key)
+        if found:
+            self.search_repo.record_search(user_id, payload)
+            return cached
 
-        return [candidate_to_dto(candidate) for candidate in candidates]
+        candidates = [candidate_to_dto(candidate) for candidate in self.repo.search_by_boolean_query(query)]
+        self.search_repo.record_search(user_id, payload)
+        APP_CACHE.set(cache_key, candidates)
+        return candidates

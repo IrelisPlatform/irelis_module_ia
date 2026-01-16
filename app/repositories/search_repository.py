@@ -44,6 +44,7 @@ class SearchRepository:
             selectinload(JobOffer.tags),
             selectinload(JobOffer.cities),
             selectinload(JobOffer.languages),
+            selectinload(JobOffer.required_documents),
         )
 
     def search_for_candidate(
