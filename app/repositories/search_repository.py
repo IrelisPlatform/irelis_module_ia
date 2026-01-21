@@ -213,3 +213,17 @@ class SearchRepository:
         )
         self.db.add(search_entry)
         self.db.commit()
+
+    def list_recent_searches_by_user(
+        self,
+        user_id: UUID,
+        limit: int,
+    ) -> list[Search]:
+        """Return the most recent searches for a user."""
+        return (
+            self.db.query(Search)
+            .filter(Search.user_id == user_id)
+            .order_by(Search.created_at.desc())
+            .limit(limit)
+            .all()
+        )

@@ -105,3 +105,49 @@ def search_offers(
         first=first,
         last=last,
     )
+
+
+@router.get(
+    "/recherches/offres/recommandations",
+    response_model=JobOfferSearchResponse,
+    tags=["recherches"],
+)
+def recommend_offers_from_history(
+    db: Annotated[Session, Depends(deps.get_db)],
+    user_id: UUID = Query(...),
+    history_limit: int = Query(default=5, ge=1, le=50),
+    page: int = Query(default=0, ge=0),
+    size: int = Query(default=10, ge=1),
+) -> JobOfferSearchResponse:
+    """Recommend offers based on a user's recent searches."""
+    service = SearchService(db)
+    offers = service.recommend_offers_from_search_history(user_id, history_limit)
+    if offers is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Utilisateur introuvable",
+        )
+
+    total_elements = len(offers)
+    if size <= 0:
+        paged_offers = offers
+        total_pages = 0 if total_elements == 0 else 1
+        first = True
+        last = True
+    else:
+        start = page * size
+        end = start + size
+        paged_offers = offers[start:end]
+        total_pages = (total_elements + size - 1) // size
+        first = page == 0
+        last = page >= max(total_pages - 1, 0)
+
+    return JobOfferSearchResponse(
+        content=paged_offers,
+        page=page,
+        size=size,
+        total_elements=total_elements,
+        total_pages=total_pages,
+        first=first,
+        last=last,
+    )
