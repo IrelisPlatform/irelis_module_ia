@@ -5,6 +5,7 @@ from uuid import UUID
 
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, selectinload
+from app.utils.offer_scoring import rank_offers_by_search
 
 from app.models import (
     Candidate,
@@ -50,6 +51,7 @@ class SearchRepository:
     def search_for_candidate(
         self,
         candidate: Candidate,
+        payload: "SearchCreate",
         search_filters: dict | None = None,
     ) -> list[JobOffer]:
         """Search offers using candidate data combined with optional filters."""
@@ -57,6 +59,7 @@ class SearchRepository:
         query = self._query()
 
         query = apply_text_search(query, filters.get("query"))
+        all_query = query
 
         candidate_preferences = getattr(candidate, "job_preferences", None)
 
@@ -124,14 +127,19 @@ class SearchRepository:
                     ),
                 )
             )
-
-        return query.all()
+            
+        filter_list = query.all()
+        complet_list = all_query.all()
+        
+        return filter_list + rank_offers_by_search([i for i in complet_list if i not in filter_list],payload)
 
     def search_by_payload(self, payload: "SearchCreate") -> list[JobOffer]:
         """Search offers using the provided payload filters only."""
         query = self._query()
         
         query = apply_text_search(query, getattr(payload, "query", None))
+        
+        all_query = query
 
         country = getattr(payload, "country", None)
         
@@ -169,8 +177,11 @@ class SearchRepository:
         if date_publication:
             query = query.filter(JobOffer.published_at >= date_publication)
 
+        filter_list = query.all()
+        complet_list = all_query.all()
         
-        return query.all()
+        return filter_list + rank_offers_by_search([i for i in complet_list if i not in filter_list],payload)
+
 
     def record_search(self, user_id: UUID, payload: "SearchCreate" | None) -> None:
         """Persist the search payload for later analytics."""

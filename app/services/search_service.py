@@ -61,7 +61,7 @@ class SearchService:
         if found:
             self.repo.record_search(user_id, payload)
             return cached
-        offers = [offer_to_dto(offer) for offer in self.repo.search_for_candidate(candidate, filters)]
+        offers = [offer_to_dto(offer) for offer in self.repo.search_for_candidate(candidate, payload,filters)]
         self.repo.record_search(user_id, payload)
         APP_CACHE.set(cache_key, offers)
         return offers
