@@ -76,8 +76,8 @@ class TagRead(BaseModel):
 class SearchRead(BaseModel):
     id: UUID
     query: str
-    type: SearchType
-    target: SearchTarget
+    type: str
+    target: str
     country: str | None = None
     city: str | None = None
     town: str | None = None
@@ -249,7 +249,7 @@ class ApplicationDocumentRead(BaseModel):
     id: UUID
     application_id: UUID | None = None
     storage_url: str | None = None
-    type: DocumentType | None = None
+    type: str | None = None
     created_at: datetime
     updated_at: datetime | None = None
 
@@ -260,7 +260,7 @@ class ApplicationDocumentRead(BaseModel):
 class ApplicationRead(BaseModel):
     id: UUID
     message: str | None = None
-    status: ApplicationStatus | None = None
+    status: str | None = None
     candidate_id: UUID
     job_offer_id: UUID
     applied_at: datetime | None = None
@@ -339,7 +339,7 @@ class RecruiterRead(BaseModel):
     last_name: str | None = None
     city: str | None = None
     country: str | None = None
-    region: str | None = None
+    # region supprimé, non présent dans le dump
     phone_number: str | None = None
     sector_id: UUID | None = None
     user_id: UUID | None = None
@@ -488,8 +488,8 @@ class ChatbotMessageRead(BaseModel):
     id: UUID
     session_id: UUID | None = None
     user_id: UUID | None = None
-    content: str
-    type: ChatbotMessageType
+        content: str
+        type: str
     created_at: datetime
     channel: ChatbotChannel | None = None
     lang: str | None = None
@@ -509,11 +509,11 @@ class ChatbotUnmatchedQuestionRead(BaseModel):
     request_message_id: UUID
     content: str
     lang: str | None = None
-    channel: ChatbotChannel | None = None
+        channel: str | None = None
     created_at: datetime
     top_candidates: dict | None = None
-    reason: ChatbotUnmatchedReason | None = None
-    status: ChatbotUnmatchedStatus
+        reason: str | None = None
+        status: str
     reviewed_at: datetime | None = None
     resolved_faq_entry_id: UUID | None = None
 

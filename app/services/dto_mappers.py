@@ -34,9 +34,9 @@ def offer_to_dto(offer: JobOffer) -> JobOfferDto:
             for city in (getattr(offer, "cities", []) or [])
             if city.city
         ],
-        contract_type=getattr(offer, "contract_type", None),
-        status=getattr(offer, "status", None),
-        job_type=getattr(offer, "job_type", None),
+        contract_type=str(getattr(offer, "contract_type", None)) if getattr(offer, "contract_type", None) else None,
+        status=str(getattr(offer, "status", None)) if getattr(offer, "status", None) else None,
+        job_type=str(getattr(offer, "job_type", None)) if getattr(offer, "job_type", None) else None,
         salary=getattr(offer, "salary", None),
         published_at=getattr(offer, "published_at", None),
         expiration_date=getattr(offer, "expiration_date", None),
@@ -50,25 +50,13 @@ def offer_to_dto(offer: JobOffer) -> JobOfferDto:
         sector_id=getattr(sector, "id", None) if sector else None,
         sector_name=getattr(sector, "name", None) if sector else None,
         company_name=getattr(recruiter, "company_name", None) if recruiter else None,
-        company_description=_as_text(getattr(recruiter, "company_description", None))
-        if recruiter
-        else None,
+        company_description=_as_text(getattr(recruiter, "company_description", None)) if recruiter else None,
         company_email=getattr(recruiter, "company_email", None) if recruiter else None,
         company_length=getattr(recruiter, "company_length", None) if recruiter else None,
-        company_logo_url=getattr(recruiter, "company_logo_url", None)
-        if recruiter
-        else None,
+        company_logo_url=getattr(recruiter, "company_logo_url", None) if recruiter else None,
         post_number=getattr(offer, "post_number", None),
-        tag_dto=[
-            TagDto(name=tag.name, type=tag.type)
-            for tag in (getattr(offer, "tags", []) or [])
-            if tag.name or tag.type
-        ],
-        required_documents=[
-            RequiredDocumentDto(type=doc.type)
-            for doc in (getattr(offer, "required_documents", []) or [])
-            if doc.type
-        ],
+        tag_dto=[TagDto(name=tag.name, type=tag.type) for tag in (getattr(offer, "tags", []) or []) if tag.name or tag.type],
+        required_documents=[RequiredDocumentDto(type=doc.type) for doc in (getattr(offer, "required_documents", []) or []) if doc.type],
     )
 
 
@@ -79,7 +67,7 @@ def candidate_to_dto(candidate: Candidate) -> CandidateDto:
     preference_dto = None
     if preference:
         contract_types = [
-            pref.contract_type
+            str(pref.contract_type)
             for pref in (getattr(preference, "contract_types", []) or [])
             if pref.contract_type
         ]
@@ -96,7 +84,6 @@ def candidate_to_dto(candidate: Candidate) -> CandidateDto:
             availability=getattr(preference, "availability", None),
             pretentions_salarial=getattr(preference, "pretentions_salarial", None),
             country=getattr(preference, "country", None),
-            region=getattr(preference, "region", None),
             city=getattr(preference, "city", None),
             sector_ids=sector_ids,
             sectors=sectors,
@@ -110,20 +97,19 @@ def candidate_to_dto(candidate: Candidate) -> CandidateDto:
         presentation=getattr(candidate, "presentation", None),
         email=getattr(user, "email", None) if user else None,
         phone_number=getattr(candidate, "phone_number", None),
-        school_level=getattr(candidate, "school_level", None),
-        experience_level=getattr(candidate, "experience_level", None),
+        school_level=str(getattr(candidate, "school_level", None)) if getattr(candidate, "school_level", None) else None,
+        experience_level=str(getattr(candidate, "experience_level", None)) if getattr(candidate, "experience_level", None) else None,
         avatar_url=getattr(candidate, "avatar_url", None),
         birth_date=getattr(candidate, "birth_date", None),
         linked_in_url=getattr(candidate, "linked_in_url", None),
         portfolio_url=getattr(candidate, "portfolio_url", None),
         country=getattr(candidate, "country", None),
-        region=getattr(candidate, "region", None),
         city=getattr(candidate, "city", None),
         cv_url=getattr(candidate, "cv_url", None),
         motivation_letter_url=getattr(candidate, "motivation_letter_url", None),
         pitch_mail=getattr(candidate, "pitch_mail", None),
         skills=[
-            CandidateSkillDto(id=skill.id, name=skill.name, level=skill.level)
+            CandidateSkillDto(id=skill.id, name=skill.name, level=str(skill.level) if skill.level else None)
             for skill in (getattr(candidate, "skills", []) or [])
         ],
         educations=[
@@ -138,7 +124,7 @@ def candidate_to_dto(candidate: Candidate) -> CandidateDto:
         ],
         languages=[
             CandidateLanguageDto(
-                id=lang.id, language=lang.language, level=lang.level
+                id=lang.id, language=lang.language, level=str(lang.level) if lang.level else None
             )
             for lang in (getattr(candidate, "languages", []) or [])
         ],

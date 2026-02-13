@@ -72,17 +72,17 @@ class JobOfferStatus(str, Enum):
 
 
 class SkillLevel(str, Enum):
-    ADVANCED = "ADVANCED"
     BEGINNER = "BEGINNER"
-    EXPERT = "EXPERT"
     INTERMEDIATE = "INTERMEDIATE"
+    ADVANCED = "ADVANCED"
+    EXPERT = "EXPERT"
 
 
 class LanguageLevel(str, Enum):
-    ADVANCED = "ADVANCED"
     BEGINNER = "BEGINNER"
-    BILINGUAL = "BILINGUAL"
     INTERMEDIATE = "INTERMEDIATE"
+    ADVANCED = "ADVANCED"
+    BILINGUAL = "BILINGUAL"
     NATIVE_LANGUAGE = "NATIVE_LANGUAGE"
 
 

@@ -2,9 +2,9 @@
 -- PostgreSQL database dump
 --
 
-\restrict bNObnwheRZQJBR3b68GSIe2U1NXbZt9DSemRJLofshHRNceCbI3XsOF9U8ySHEu
+\restrict fbCr5jSFWR3MvruKihusXO5TrxrAdbwVgshm6r3IQc9wCcqAKcCaCoYr17xtcZ8
 
--- Dumped from database version 17.6
+-- Dumped from database version 17.7 (bdd1736)
 -- Dumped by pg_dump version 17.7 (Debian 17.7-3.pgdg13+1)
 
 SET statement_timeout = 0;
@@ -34,172 +34,18 @@ COMMENT ON SCHEMA public IS 'standard public schema';
 
 
 --
--- Name: application_status_enum; Type: TYPE; Schema: public; Owner: -
+-- Name: contract_type_enum; Type: TYPE; Schema: public; Owner: -
 --
 
-CREATE TYPE public.application_status_enum AS ENUM (
-    'ACCEPTED',
-    'PENDING',
-    'REJECTED',
-    'REVIEWED',
-    'WITHDRAWN'
-);
-
-
---
--- Name: candidate_experience_level_enum; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE public.candidate_experience_level_enum AS ENUM (
-    'ADVANCED',
-    'BEGINNER',
-    'EXPERT',
-    'INTERMEDIATE',
-    'JUNIOR',
-    'SENIOR'
-);
-
-
---
--- Name: candidate_school_level_enum; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE public.candidate_school_level_enum AS ENUM (
-    'BAC',
-    'BTS',
-    'DEUG',
-    'DOCTORAL',
-    'DUT',
-    'LICENCE',
-    'MASTER',
-    'UNKNOWN'
-);
-
-
---
--- Name: email_otp_purpose_enum; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE public.email_otp_purpose_enum AS ENUM (
-    'LOGIN_REGISTER',
-    'PASSWORD_RESET'
-);
-
-
---
--- Name: email_otp_user_type_enum; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE public.email_otp_user_type_enum AS ENUM (
-    'ADMIN',
-    'CANDIDATE',
-    'RECRUITER'
-);
-
-
---
--- Name: job_offer_contract_enum; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE public.job_offer_contract_enum AS ENUM (
+CREATE TYPE public.contract_type_enum AS ENUM (
     'ALTERNATIVE',
     'CDD',
+    'CDD_PART_TIME',
     'CDI',
+    'CDI_PART_TIME',
     'FREELANCE',
-    'INTERNSHIP'
-);
-
-
---
--- Name: job_offer_experience_level_enum; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE public.job_offer_experience_level_enum AS ENUM (
-    'ADVANCED',
-    'BEGINNER',
-    'EXPERT',
-    'INTERMEDIATE',
-    'JUNIOR',
-    'SENIOR'
-);
-
-
---
--- Name: job_offer_school_level_enum; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE public.job_offer_school_level_enum AS ENUM (
-    'BAC',
-    'BTS',
-    'DEUG',
-    'DOCTORAL',
-    'DUT',
-    'LICENCE',
-    'MASTER',
-    'UNKNOWN'
-);
-
-
---
--- Name: job_offer_status_enum; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE public.job_offer_status_enum AS ENUM (
-    'CLOSED',
-    'DELETED',
-    'DRAFT',
-    'EXPIRED',
-    'PUBLISHED'
-);
-
-
---
--- Name: job_offer_type_enum; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE public.job_offer_type_enum AS ENUM (
-    'FULL_TIME',
-    'HYBRID',
-    'PART_TIME',
-    'REMOTE'
-);
-
-
---
--- Name: job_preferences_contract_enum; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE public.job_preferences_contract_enum AS ENUM (
-    'ALTERNATIVE',
-    'CDD',
-    'CDI',
-    'FREELANCE',
-    'INTERNSHIP'
-);
-
-
---
--- Name: language_level_enum; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE public.language_level_enum AS ENUM (
-    'ADVANCED',
-    'BEGINNER',
-    'BILINGUAL',
-    'INTERMEDIATE',
-    'NATIVE_LANGUAGE'
-);
-
-
---
--- Name: provider_enum; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE public.provider_enum AS ENUM (
-    'EMAIL',
-    'FACEBOOK',
-    'GOOGLE',
-    'LINKEDIN'
+    'INTERNSHIP',
+    'INTERIM'
 );
 
 
@@ -220,40 +66,6 @@ CREATE TYPE public.search_target_enum AS ENUM (
 CREATE TYPE public.search_type_enum AS ENUM (
     'BOOL',
     'NOT'
-);
-
-
---
--- Name: skill_level_enum; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE public.skill_level_enum AS ENUM (
-    'ADVANCED',
-    'BEGINNER',
-    'EXPERT',
-    'INTERMEDIATE'
-);
-
-
---
--- Name: user_role_enum; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE public.user_role_enum AS ENUM (
-    'ADMIN',
-    'CANDIDATE',
-    'RECRUITER'
-);
-
-
---
--- Name: user_type_enum; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE public.user_type_enum AS ENUM (
-    'ADMIN',
-    'CANDIDATE',
-    'RECRUITER'
 );
 
 
@@ -285,7 +97,7 @@ CREATE TABLE public.applications (
     created_at timestamp(6) without time zone,
     updated_at timestamp(6) without time zone,
     applied_at timestamp(6) without time zone,
-    message character varying(255),
+    message text,
     status character varying(255),
     candidate_id uuid NOT NULL,
     job_offer_id uuid NOT NULL,
@@ -313,7 +125,6 @@ CREATE TABLE public.candidates (
     linked_in_url character varying(255),
     city character varying(255),
     country character varying(255),
-    region character varying(255),
     monthly_profile_views integer,
     motivation_letter_url character varying(255),
     phone_number character varying(255),
@@ -335,13 +146,13 @@ CREATE TABLE public.candidates (
 
 CREATE TABLE public.candidature_info (
     id uuid NOT NULL,
-    created_at timestamp(6) without time zone,
-    updated_at timestamp(6) without time zone,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    updated_at timestamp without time zone,
+    job_offer_id uuid NOT NULL,
     email_candidature character varying(255),
     instructions character varying(255),
     required_documents character varying(255),
-    url_candidature character varying(255),
-    job_offer_id uuid NOT NULL
+    url_candidature character varying(255)
 );
 
 
@@ -545,7 +356,7 @@ CREATE TABLE public.job_offer (
     title character varying(255),
     work_country_location character varying(255),
     company_id uuid NOT NULL,
-    CONSTRAINT job_offer_contract_type_check CHECK (((contract_type)::text = ANY ((ARRAY['CDI'::character varying, 'CDD'::character varying, 'INTERNSHIP'::character varying, 'ALTERNATIVE'::character varying, 'FREELANCE'::character varying])::text[]))),
+    CONSTRAINT job_offer_contract_type_check CHECK (((contract_type)::text = ANY (ARRAY[('CDI'::character varying)::text, ('CDD'::character varying)::text, ('INTERNSHIP'::character varying)::text, ('ALTERNATIVE'::character varying)::text, ('FREELANCE'::character varying)::text, ('CDI_PART_TIME'::character varying)::text, ('CDD_PART_TIME'::character varying)::text, ('INTERIM'::character varying)::text]))),
     CONSTRAINT job_offer_job_type_check CHECK (((job_type)::text = ANY ((ARRAY['FULL_TIME'::character varying, 'PART_TIME'::character varying, 'REMOTE'::character varying, 'HYBRID'::character varying])::text[]))),
     CONSTRAINT job_offer_status_check CHECK (((status)::text = ANY ((ARRAY['PENDING'::character varying, 'PUBLISHED'::character varying, 'EXPIRED'::character varying, 'REJECTED'::character varying, 'CLOSED'::character varying])::text[])))
 );
@@ -593,7 +404,6 @@ CREATE TABLE public.job_preferences (
     desired_position character varying(255),
     city character varying(255),
     country character varying(255),
-    region character varying(255),
     pretentions_salarial character varying(255),
     candidate_id uuid NOT NULL
 );
@@ -606,7 +416,7 @@ CREATE TABLE public.job_preferences (
 CREATE TABLE public.job_preferences_contract_types (
     job_preferences_id uuid NOT NULL,
     contract_type character varying(255) NOT NULL,
-    CONSTRAINT job_preferences_contract_types_contract_type_check CHECK (((contract_type)::text = ANY ((ARRAY['CDI'::character varying, 'CDD'::character varying, 'INTERNSHIP'::character varying, 'ALTERNATIVE'::character varying, 'FREELANCE'::character varying])::text[])))
+    CONSTRAINT job_preferences_contract_types_contract_type_check CHECK (((contract_type)::text = ANY ((ARRAY['CDI'::character varying, 'CDD'::character varying, 'INTERNSHIP'::character varying, 'ALTERNATIVE'::character varying, 'FREELANCE'::character varying, 'CDI_PART_TIME'::character varying, 'CDD_PART_TIME'::character varying, 'INTERIM'::character varying])::text[])))
 );
 
 
@@ -656,7 +466,6 @@ CREATE TABLE public.recruiters (
     last_name character varying(255),
     city character varying(255),
     country character varying(255),
-    region character varying(255),
     phone_number character varying(255),
     sector_id uuid,
     user_id uuid
@@ -814,6 +623,14 @@ ALTER TABLE ONLY public.applications
 
 ALTER TABLE ONLY public.candidates
     ADD CONSTRAINT candidates_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: candidature_info candidature_info_job_offer_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.candidature_info
+    ADD CONSTRAINT candidature_info_job_offer_id_key UNIQUE (job_offer_id);
 
 
 --
@@ -1009,14 +826,6 @@ ALTER TABLE ONLY public.tag
 
 
 --
--- Name: candidature_info uk8atf9puoqpr0npdqd23gyl4fr; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.candidature_info
-    ADD CONSTRAINT uk8atf9puoqpr0npdqd23gyl4fr UNIQUE (job_offer_id);
-
-
---
 -- Name: applications ukbigbiiy8iifquorgjvxockq5s; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1178,6 +987,14 @@ CREATE INDEX ix_chatbot_unmatched_questions_user_id ON public.chatbot_unmatched_
 
 
 --
+-- Name: candidature_info candidature_info_job_offer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.candidature_info
+    ADD CONSTRAINT candidature_info_job_offer_id_fkey FOREIGN KEY (job_offer_id) REFERENCES public.job_offer(id);
+
+
+--
 -- Name: chatbot_feedback chatbot_feedback_faq_entry_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1330,27 +1147,19 @@ ALTER TABLE ONLY public.job_offer_tags
 
 
 --
--- Name: job_offer_cities fk_job_offer_cities_on_job_offer; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.job_offer_cities
-    ADD CONSTRAINT fk_job_offer_cities_on_job_offer FOREIGN KEY (job_offer_id) REFERENCES public.job_offer(id);
-
-
---
--- Name: job_offer_languages fk_job_offer_languages_on_job_offer; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.job_offer_languages
-    ADD CONSTRAINT fk_job_offer_languages_on_job_offer FOREIGN KEY (job_offer_id) REFERENCES public.job_offer(id);
-
-
---
 -- Name: application_document fkb7xr983jbgy8cj40aobikcqlk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.application_document
     ADD CONSTRAINT fkb7xr983jbgy8cj40aobikcqlk FOREIGN KEY (application_id) REFERENCES public.applications(id);
+
+
+--
+-- Name: job_offer_cities fkbg72bi302e2fqgqpjv4b66g6w; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.job_offer_cities
+    ADD CONSTRAINT fkbg72bi302e2fqgqpjv4b66g6w FOREIGN KEY (job_offer_id) REFERENCES public.job_offer(id);
 
 
 --
@@ -1410,6 +1219,14 @@ ALTER TABLE ONLY public.skill
 
 
 --
+-- Name: job_offer_languages fkljhhia3cuxdqiv8ju2qra9tne; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.job_offer_languages
+    ADD CONSTRAINT fkljhhia3cuxdqiv8ju2qra9tne FOREIGN KEY (job_offer_id) REFERENCES public.job_offer(id);
+
+
+--
 -- Name: candidates fkme4fkelukmx2s63tlcrft6hio; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1458,8 +1275,16 @@ ALTER TABLE ONLY public.required_documents
 
 
 --
+-- Name: searches searches_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.searches
+    ADD CONSTRAINT searches_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
 -- PostgreSQL database dump complete
 --
 
-\unrestrict bNObnwheRZQJBR3b68GSIe2U1NXbZt9DSemRJLofshHRNceCbI3XsOF9U8ySHEu
+\unrestrict fbCr5jSFWR3MvruKihusXO5TrxrAdbwVgshm6r3IQc9wCcqAKcCaCoYr17xtcZ8
 

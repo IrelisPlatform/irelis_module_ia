@@ -60,17 +60,8 @@ class User(Base):
     provider = Column(
         Enum(Provider, name="provider_enum", native_enum=False), nullable=False
     )
-    role = Column(
-        Enum(UserRole, name="user_role_enum", native_enum=False), nullable=False
-    )
-    user_type = Column(Enum(UserType, name="user_type_enum", native_enum=False))
-
-    candidate = relationship("Candidate", back_populates="user", uselist=False)
-    recruiter = relationship("Recruiter", back_populates="user", uselist=False)
-    sessions = relationship("UserSession", back_populates="user")
-    searches = relationship("Search", back_populates="user")
-    chatbot_sessions = relationship("ChatbotSession", back_populates="user")
-    chatbot_messages = relationship("ChatbotMessage", back_populates="user")
+    type = Column(String(8), nullable=False)
+    channel = Column(String(8))
     chatbot_feedback = relationship("ChatbotFeedback", back_populates="user")
     chatbot_unmatched_questions = relationship(
         "ChatbotUnmatchedQuestion", back_populates="user"
@@ -87,13 +78,7 @@ class Candidate(Base):
     birth_date = Column(DateTime(timezone=False))
     completion_rate = Column(Float)
     cv_url = Column(String(255))
-    experience_level = Column(
-        Enum(
-            ExperienceLevel,
-            name="candidate_experience_level_enum",
-            native_enum=False,
-        )
-    )
+        experience_level = Column(String(255))
     first_name = Column(String(255))
     is_visible = Column(Boolean)
     last_viewed_month = Column(Date)
@@ -103,16 +88,14 @@ class Candidate(Base):
     linked_in_url = Column(String(255))
     city = Column(String(255))
     country = Column(String(255))
-    region = Column(String(255))
+        # region supprimé, non présent dans le dump
     motivation_letter_url = Column(String(255))
     phone_number = Column(String(255))
     pitch_mail = Column(String(2000))
     portfolio_url = Column(String(255))
     presentation = Column(String(255))
     professional_title = Column(String(255))
-    school_level = Column(
-        Enum(SchoolLevel, name="candidate_school_level_enum", native_enum=False)
-    )
+        school_level = Column(String(255))
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
 
     user = relationship("User", back_populates="candidate")
@@ -129,10 +112,8 @@ class Education(Base):
     __tablename__ = "education"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    created_at = Column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    created_at = Column(DateTime(timezone=False))
+    updated_at = Column(DateTime(timezone=False))
     city = Column(String(255))
     degree = Column(String(255))
     graduation_year = Column(Integer)
@@ -148,13 +129,9 @@ class Experience(Base):
     __tablename__ = "experience"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    created_at = Column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    city = Column(String(255))
-    company_name = Column(String(255))
-    description = Column(String(255))
+        created_at = Column(DateTime(timezone=False))
+        updated_at = Column(DateTime(timezone=False))
+        # region supprimé, non présent dans le dump
     end_date = Column(DateTime(timezone=True))
     is_current = Column(Boolean)
     position = Column(String(255))
@@ -170,11 +147,9 @@ class Skill(Base):
     __tablename__ = "skill"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    created_at = Column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    level = Column(Enum(SkillLevel, name="skill_level_enum", native_enum=False))
+    created_at = Column(DateTime(timezone=False))
+    updated_at = Column(DateTime(timezone=False))
+    level = Column(String(255))
     name = Column(String(255))
     candidate_id = Column(
         UUID(as_uuid=True), ForeignKey("candidates.id"), nullable=False
@@ -187,12 +162,10 @@ class Language(Base):
     __tablename__ = "language"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    created_at = Column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    created_at = Column(DateTime(timezone=False))
+    updated_at = Column(DateTime(timezone=False))
     language = Column(String(255))
-    level = Column(Enum(LanguageLevel, name="language_level_enum", native_enum=False))
+    level = Column(String(255))
     candidate_id = Column(
         UUID(as_uuid=True), ForeignKey("candidates.id"), nullable=False
     )
@@ -212,7 +185,7 @@ class JobPreferences(Base):
     desired_position = Column(String(255))
     city = Column(String(255))
     country = Column(String(255))
-    region = Column(String(255))
+    # region supprimé, non présent dans le dump
     pretentions_salarial = Column(String(255))
     candidate_id = Column(
         UUID(as_uuid=True), ForeignKey("candidates.id"), nullable=False
@@ -321,46 +294,24 @@ class JobOffer(Base):
         DateTime(timezone=False), server_default=func.now(), nullable=False
     )
     updated_at = Column(DateTime(timezone=False), onupdate=func.now())
-    contract_type = Column(
-        Enum(ContractType, name="job_offer_contract_enum", native_enum=False)
-    )
+        contract_type = Column(String(255))
     description = Column(OID)
     expiration_date = Column(DateTime(timezone=False))
     instructions = Column(String(255))
     is_featured = Column(Boolean)
     is_urgent = Column(Boolean)
-    job_type = Column(Enum(JobType, name="job_offer_type_enum", native_enum=False))
+        job_type = Column(String(255))
     post_number = Column(Integer)
     published_at = Column(DateTime(timezone=False))
     reject_reason = Column(String(255))
     rejected_at = Column(DateTime(timezone=False))
     salary = Column(String(255))
-    status = Column(Enum(JobOfferStatus, native_enum=False))
+        status = Column(String(255))
     title = Column(String(255))
     work_country_location = Column(String(255))
-    company_id = Column(
-        UUID(as_uuid=True), ForeignKey("recruiters.id"), nullable=False
-    )
-
-    recruiter = relationship("Recruiter", back_populates="job_offers")
-    applications = relationship(
-        "Application", back_populates="job_offer", cascade="all, delete-orphan"
-    )
-    cities = relationship(
-        "JobOfferCity",
-        back_populates="job_offer",
-        cascade="all, delete-orphan",
-    )
-    languages = relationship(
-        "JobOfferLanguage",
-        back_populates="job_offer",
-        cascade="all, delete-orphan",
-    )
-    saved_by = relationship(
-        "SavedJobOffer", back_populates="job_offer", cascade="all, delete-orphan"
-    )
-    tag_links = relationship(
-        "JobOfferTag",
+    channel = Column(String(8))
+    reason = Column(String(14))
+    status = Column(String(11), nullable=False, default="new")
         back_populates="job_offer",
         cascade="all, delete-orphan",
     )
@@ -450,9 +401,7 @@ class Application(Base):
     updated_at = Column(DateTime(timezone=False), onupdate=func.now())
     applied_at = Column(DateTime(timezone=False))
     message = Column(String(255))
-    status = Column(
-        Enum(ApplicationStatus, name="application_status_enum", native_enum=False)
-    )
+    status = Column(String(255))
     candidate_id = Column(
         UUID(as_uuid=True), ForeignKey("candidates.id"), nullable=False
     )
@@ -478,13 +427,7 @@ class ApplicationDocument(Base):
     )
     updated_at = Column(DateTime(timezone=False), onupdate=func.now())
     storage_url = Column(String(255))
-    type = Column(
-        Enum(
-            DocumentType,
-            name="application_document_type_enum",
-            native_enum=False,
-        )
-    )
+    type = Column(String(255))
     application_id = Column(UUID(as_uuid=True), ForeignKey("applications.id"))
 
     application = relationship("Application", back_populates="documents")
@@ -553,8 +496,8 @@ class Search(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     query = Column(String(255), nullable=False)
-    type = Column(Enum(SearchType, name="search_type_enum"), nullable=False)
-    target = Column(Enum(SearchTarget, name="search_target_enum"), nullable=False)
+    type = Column(String(255), nullable=False)
+    target = Column(String(255), nullable=False)
     country = Column(String(255))
     city = Column(String(255))
     town = Column(String(255))
