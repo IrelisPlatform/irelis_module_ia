@@ -78,7 +78,7 @@ class Candidate(Base):
     birth_date = Column(DateTime(timezone=False))
     completion_rate = Column(Float)
     cv_url = Column(String(255))
-        experience_level = Column(String(255))
+    experience_level = Column(String(255))
     first_name = Column(String(255))
     is_visible = Column(Boolean)
     last_viewed_month = Column(Date)
@@ -88,14 +88,14 @@ class Candidate(Base):
     linked_in_url = Column(String(255))
     city = Column(String(255))
     country = Column(String(255))
-        # region supprimé, non présent dans le dump
+    # region supprimé, non présent dans le dump
     motivation_letter_url = Column(String(255))
     phone_number = Column(String(255))
     pitch_mail = Column(String(2000))
     portfolio_url = Column(String(255))
     presentation = Column(String(255))
     professional_title = Column(String(255))
-        school_level = Column(String(255))
+    school_level = Column(String(255))
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
 
     user = relationship("User", back_populates="candidate")
@@ -129,9 +129,9 @@ class Experience(Base):
     __tablename__ = "experience"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-        created_at = Column(DateTime(timezone=False))
-        updated_at = Column(DateTime(timezone=False))
-        # region supprimé, non présent dans le dump
+    created_at = Column(DateTime(timezone=False))
+    updated_at = Column(DateTime(timezone=False))
+    # region supprimé, non présent dans le dump
     end_date = Column(DateTime(timezone=True))
     is_current = Column(Boolean)
     position = Column(String(255))
@@ -294,27 +294,27 @@ class JobOffer(Base):
         DateTime(timezone=False), server_default=func.now(), nullable=False
     )
     updated_at = Column(DateTime(timezone=False), onupdate=func.now())
-        contract_type = Column(String(255))
+    contract_type = Column(String(255))
     description = Column(OID)
     expiration_date = Column(DateTime(timezone=False))
     instructions = Column(String(255))
     is_featured = Column(Boolean)
     is_urgent = Column(Boolean)
-        job_type = Column(String(255))
+    job_type = Column(String(255))
     post_number = Column(Integer)
     published_at = Column(DateTime(timezone=False))
     reject_reason = Column(String(255))
     rejected_at = Column(DateTime(timezone=False))
     salary = Column(String(255))
-        status = Column(String(255))
+    status = Column(String(255))
     title = Column(String(255))
     work_country_location = Column(String(255))
     channel = Column(String(8))
     reason = Column(String(14))
     status = Column(String(11), nullable=False, default="new")
-        back_populates="job_offer",
-        cascade="all, delete-orphan",
-    )
+    #! back_populates="job_offer",
+    #!     cascade="all, delete-orphan",
+    #! )
     tags = relationship(
         "Tag",
         secondary="job_offer_tags",

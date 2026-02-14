@@ -488,8 +488,8 @@ class ChatbotMessageRead(BaseModel):
     id: UUID
     session_id: UUID | None = None
     user_id: UUID | None = None
-        content: str
-        type: str
+    content: str
+    type: str
     created_at: datetime
     channel: ChatbotChannel | None = None
     lang: str | None = None
@@ -509,11 +509,11 @@ class ChatbotUnmatchedQuestionRead(BaseModel):
     request_message_id: UUID
     content: str
     lang: str | None = None
-        channel: str | None = None
+    channel: str | None = None
     created_at: datetime
     top_candidates: dict | None = None
-        reason: str | None = None
-        status: str
+    reason: str | None = None
+    status: str
     reviewed_at: datetime | None = None
     resolved_faq_entry_id: UUID | None = None
 
