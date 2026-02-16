@@ -19,6 +19,7 @@ from app.schemas import (
     ChatbotSessionRead,
 )
 from app.services.chatbot_service import ChatbotService
+from app.utils.cache import APP_CACHE, make_cache_key
 
 
 router = APIRouter()
@@ -89,6 +90,11 @@ def get_current_session(
     channel: ChatbotChannel = Query(...),
 ) -> ChatbotSessionRead:
     """Return the current session for a user/channel."""
+    cache_key = make_cache_key("current_session", user_id, channel)
+    cached = APP_CACHE.get(cache_key)
+    if cached[0]:
+        return cached[1]
+
     service = ChatbotService(db)
     session = service.get_current_session(user_id, channel)
     if session is None:
@@ -96,6 +102,7 @@ def get_current_session(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Session introuvable.",
         )
+    APP_CACHE.set(cache_key, session)
     return session
 
 
@@ -113,8 +120,17 @@ def list_user_messages(
     offset: int = Query(default=0, ge=0),
 ) -> list[ChatbotMessageRead]:
     """Return paginated chatbot messages for a user."""
+    cache_key = make_cache_key(
+        "user_messages", user_id, session_id, channel, limit, offset
+    )
+    cached = APP_CACHE.get(cache_key)
+    if cached[0]:
+        return cached[1]
+
     service = ChatbotService(db)
-    return service.list_messages(user_id, session_id, channel, limit, offset)
+    messages = service.list_messages(user_id, session_id, channel, limit, offset)
+    APP_CACHE.set(cache_key, messages)
+    return messages
 
 
 @router.get(
@@ -129,8 +145,15 @@ def list_session_messages(
     offset: int = Query(default=0, ge=0),
 ) -> list[ChatbotMessageRead]:
     """Return paginated messages for a specific session."""
+    cache_key = make_cache_key("session_messages", session_id, limit, offset)
+    cached = APP_CACHE.get(cache_key)
+    if cached[0]:
+        return cached[1]
+
     service = ChatbotService(db)
-    return service.list_messages_for_session(session_id, limit, offset)
+    messages = service.list_messages_for_session(session_id, limit, offset)
+    APP_CACHE.set(cache_key, messages)
+    return messages
 
 
 @router.post(

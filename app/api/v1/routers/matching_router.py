@@ -13,6 +13,7 @@ from app.schemas import (
     MatchingScoreResponse,
 )
 from app.services.matching_service import MatchingService
+from app.utils.cache import APP_CACHE, make_cache_key
 
 
 router = APIRouter()
@@ -49,6 +50,11 @@ def get_recommendations(
     k: int = Query(10, ge=1, le=50),
 ) -> CandidateRecommendationsResponse:
     """Return the top-k offers ranked for the provided candidate."""
+    cache_key = make_cache_key("recommendations", candidate_id, k)
+    cached = APP_CACHE.get(cache_key)
+    if cached[0]:
+        return cached[1]
+
     service = MatchingService(db)
     response = service.recommend_offers_for_candidate(candidate_id, k)
     if response is None:
@@ -57,4 +63,5 @@ def get_recommendations(
             detail="Candidat introuvable",
         )
 
+    APP_CACHE.set(cache_key, response)
     return response

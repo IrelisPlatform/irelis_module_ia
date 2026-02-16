@@ -17,6 +17,7 @@ from app.models.enums import (
     SearchTarget,
     SearchType,
 )
+from app.utils.cache import APP_CACHE, make_cache_key
 
 router = APIRouter()
 
@@ -69,7 +70,11 @@ def search_offers(
     size: int = Query(default=10, ge=1),
 ) -> JobOfferSearchResponse:
     """Search job offers by payload or contextually for a candidate."""
-    
+    cache_key = make_cache_key("search_offers", filters, user_id, page, size)
+    cached = APP_CACHE.get(cache_key)
+    if cached[0]:
+        return cached[1]
+
     service = SearchService(db)
     if user_id is None:
         offers = service.search_by_payload(filters)
@@ -96,7 +101,7 @@ def search_offers(
         first = page == 0
         last = page >= max(total_pages - 1, 0)
 
-    return JobOfferSearchResponse(
+    response = JobOfferSearchResponse(
         content=paged_offers,
         page=page,
         size=size,
@@ -105,6 +110,8 @@ def search_offers(
         first=first,
         last=last,
     )
+    APP_CACHE.set(cache_key, response)
+    return response
 
 
 @router.get(
@@ -120,6 +127,11 @@ def recommend_offers_from_history(
     size: int = Query(default=10, ge=1),
 ) -> JobOfferSearchResponse:
     """Recommend offers based on a user's recent searches."""
+    cache_key = make_cache_key("recommend_offers", user_id, history_limit, page, size)
+    cached = APP_CACHE.get(cache_key)
+    if cached[0]:
+        return cached[1]
+
     service = SearchService(db)
     offers = service.recommend_offers_from_search_history(user_id, history_limit)
     if offers is None:
@@ -142,7 +154,7 @@ def recommend_offers_from_history(
         first = page == 0
         last = page >= max(total_pages - 1, 0)
 
-    return JobOfferSearchResponse(
+    response = JobOfferSearchResponse(
         content=paged_offers,
         page=page,
         size=size,
@@ -151,3 +163,5 @@ def recommend_offers_from_history(
         first=first,
         last=last,
     )
+    APP_CACHE.set(cache_key, response)
+    return response

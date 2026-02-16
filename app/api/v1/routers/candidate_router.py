@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.api.v1 import deps
 from app.schemas import CandidateDto
 from app.services.candidate_service import CandidateService
+from app.utils.cache import APP_CACHE, make_cache_key
 
 router = APIRouter()
 
@@ -18,7 +19,13 @@ def list_candidates(
     db: Annotated[Session, Depends(deps.get_db)],
 ) -> list[CandidateDto]:
     """Return every candidate profile."""
-    return CandidateService(db).list_candidates()
+    cache_key = make_cache_key("list_candidates")
+    cached = APP_CACHE.get(cache_key)
+    if cached[0]:
+        return cached[1]
+    results = CandidateService(db).list_candidates()
+    APP_CACHE.set(cache_key, results)
+    return results
 
 
 @router.get(
@@ -32,9 +39,15 @@ def boolean_search_candidates(
     query: str = Query(..., min_length=1, description="Requête booléenne"),
 ) -> list[CandidateDto]:
     """Search candidates using boolean operators and nested expressions."""
+    cache_key = make_cache_key("boolean_search_candidates", user_id, query)
+    cached = APP_CACHE.get(cache_key)
+    if cached[0]:
+        return cached[1]
     service = CandidateService(db)
     try:
-        return service.search_by_boolean_query(query=query, user_id=user_id)
+        results = service.search_by_boolean_query(query=query, user_id=user_id)
+        APP_CACHE.set(cache_key, results)
+        return results
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
