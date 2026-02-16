@@ -16,9 +16,10 @@ from sqlalchemy import (
     String,
     Text,
     text,
+    case,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID, OID
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, column_property
 from sqlalchemy.sql import func
 
 from app.db.base import Base
@@ -266,7 +267,18 @@ class Recruiter(Base):
         DateTime(timezone=False), server_default=func.now(), nullable=False
     )
     updated_at = Column(DateTime(timezone=False), onupdate=func.now())
-    company_description = Column(Text)
+    _company_description_oid = Column("company_description", OID)
+    company_description = column_property(
+        case(
+            [
+                (
+                    _company_description_oid != None,
+                    func.convert_from(func.lo_get(_company_description_oid), "UTF8"),
+                )
+            ],
+            else_=None,
+        )
+    )
     company_email = Column(String(255))
     company_length = Column(String(255))
     company_linked_in_url = Column(String(255))
@@ -299,7 +311,18 @@ class JobOffer(Base):
     )
     updated_at = Column(DateTime(timezone=False), onupdate=func.now())
     contract_type = Column(String(255))
-    description = Column(Text)
+    _description_oid = Column("description", OID)
+    description = column_property(
+        case(
+            [
+                (
+                    _description_oid != None,
+                    func.convert_from(func.lo_get(_description_oid), "UTF8"),
+                )
+            ],
+            else_=None,
+        )
+    )
     expiration_date = Column(DateTime(timezone=False))
     instructions = Column(String(255))
     is_featured = Column(Boolean)
