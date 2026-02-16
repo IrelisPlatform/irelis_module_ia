@@ -270,12 +270,10 @@ class Recruiter(Base):
     _company_description_oid = Column("company_description", OID)
     company_description = column_property(
         case(
-            [
-                (
-                    _company_description_oid != None,
-                    func.convert_from(func.lo_get(_company_description_oid), "UTF8"),
-                )
-            ],
+            (
+                _company_description_oid != None,
+                func.convert_from(func.lo_get(_company_description_oid), "UTF8"),
+            ),
             else_=None,
         )
     )
@@ -314,12 +312,10 @@ class JobOffer(Base):
     _description_oid = Column("description", OID)
     description = column_property(
         case(
-            [
-                (
-                    _description_oid != None,
-                    func.convert_from(func.lo_get(_description_oid), "UTF8"),
-                )
-            ],
+            (
+                _description_oid != None,
+                func.convert_from(func.lo_get(_description_oid), "UTF8"),
+            ),
             else_=None,
         )
     )
