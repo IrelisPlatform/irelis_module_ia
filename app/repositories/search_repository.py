@@ -202,9 +202,9 @@ class SearchRepository:
             country = payload.country
             city = payload.city
             town = payload.town
-            type_contrat = payload.type_contrat or payload.contract_type
-            niveau_etude = payload.niveau_etude or payload.school_level
-            experience = payload.experience or payload.experience_level
+            type_contrat = getattr(payload, "type_contrat", None) or getattr(payload, "contract_type", None)
+            niveau_etude = getattr(payload, "niveau_etude", None) or getattr(payload, "school_level", None)
+            experience = getattr(payload, "experience", None) or getattr(payload, "experience_level", None)
             language = payload.language
             date_publication = payload.date_publication
 

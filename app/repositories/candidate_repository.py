@@ -88,7 +88,7 @@ class CandidateRepository:
                     JobPreferences.desired_position.ilike(like_term),
                     JobPreferences.city.ilike(like_term),
                     JobPreferences.country.ilike(like_term),
-                    JobPreferences.region.ilike(like_term),
+                    # JobPreferences.region.ilike(like_term),
                     JobPreferences.availability.ilike(like_term),
                     JobPreferences.pretentions_salarial.ilike(like_term),
                 )
@@ -148,7 +148,7 @@ class CandidateRepository:
             Candidate.pitch_mail.ilike(like_term),
             Candidate.city.ilike(like_term),
             Candidate.country.ilike(like_term),
-            Candidate.region.ilike(like_term),
+            # Candidate.region.ilike(like_term),
             Candidate.phone_number.ilike(like_term),
             Candidate.portfolio_url.ilike(like_term),
             Candidate.linked_in_url.ilike(like_term),

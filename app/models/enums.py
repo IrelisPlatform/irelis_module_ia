@@ -51,9 +51,12 @@ class SchoolLevel(str, Enum):
 class ContractType(str, Enum):
     ALTERNATIVE = "ALTERNATIVE"
     CDD = "CDD"
+    CDD_PART_TIME = "CDD_PART_TIME"
     CDI = "CDI"
+    CDI_PART_TIME = "CDI_PART_TIME"
     FREELANCE = "FREELANCE"
     INTERNSHIP = "INTERNSHIP"
+    INTERIM = "INTERIM"
 
 
 class JobType(str, Enum):

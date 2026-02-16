@@ -33,9 +33,9 @@ from app.models.enums import (
 
 class UserBase(BaseModel):
     email: EmailStr
-    role: str
-    provider: str
-    user_type: str | None = None
+    role: UserRole
+    provider: Provider
+    user_type: UserType | None = None
 
 
 class UserRead(UserBase):
@@ -45,7 +45,7 @@ class UserRead(UserBase):
     deleted: bool
     deleted_at: datetime | None = None
     email_verified_at: datetime | None = None
-    # last_login n'est pas dans la table users du dump, donc retiré
+    user_type: UserType | None = None
 
     class Config:
         from_attributes = True
@@ -76,8 +76,8 @@ class TagRead(BaseModel):
 class SearchRead(BaseModel):
     id: UUID
     query: str
-    type: str
-    target: str
+    type: SearchType
+    target: SearchTarget
     country: str | None = None
     city: str | None = None
     town: str | None = None
@@ -100,11 +100,8 @@ class SearchBase(BaseModel):
     country: str | None = None
     city: str | None = None
     town: str | None = None
-    type_contrat: ContractType | list[ContractType] | None = None
     contract_type: ContractType | list[ContractType] | None = None
-    niveau_etude: SchoolLevel | None = None
     school_level: SchoolLevel | None = None
-    experience: ExperienceLevel | None = None
     experience_level: ExperienceLevel | None = None
     language: str | None = None
     date_publication: datetime | None = None
@@ -176,7 +173,7 @@ class ExperienceRead(BaseModel):
     city: str | None = None
     company_name: str | None = None
     description: str | None = None
-    end_date: datetime | None = None
+    end_date: datetime
     is_current: bool | None = None
     position: str | None = None
     start_date: datetime
@@ -233,7 +230,6 @@ class JobPreferencesRead(BaseModel):
     desired_position: str | None = None
     city: str | None = None
     country: str | None = None
-    region: str | None = None
     pretentions_salarial: str | None = None
     candidate_id: UUID
     contract_types: list[JobPreferencesContractTypeRead] = Field(default_factory=list)
@@ -249,7 +245,7 @@ class ApplicationDocumentRead(BaseModel):
     id: UUID
     application_id: UUID | None = None
     storage_url: str | None = None
-    type: str | None = None
+    type: DocumentType | None = None
     created_at: datetime
     updated_at: datetime | None = None
 
@@ -260,7 +256,7 @@ class ApplicationDocumentRead(BaseModel):
 class ApplicationRead(BaseModel):
     id: UUID
     message: str | None = None
-    status: str | None = None
+    status: ApplicationStatus | None = None
     candidate_id: UUID
     job_offer_id: UUID
     applied_at: datetime | None = None
@@ -291,7 +287,7 @@ class CandidateRead(BaseModel):
     birth_date: datetime | None = None
     completion_rate: float | None = None
     cv_url: str | None = None
-    experience_level: str | None = None
+    experience_level: ExperienceLevel | None = None
     first_name: str | None = None
     is_visible: bool | None = None
     last_viewed_month: date | None = None
@@ -301,14 +297,13 @@ class CandidateRead(BaseModel):
     linked_in_url: str | None = None
     city: str | None = None
     country: str | None = None
-    region: str | None = None
     motivation_letter_url: str | None = None
     phone_number: str | None = None
     pitch_mail: str | None = None
     portfolio_url: str | None = None
     presentation: str | None = None
     professional_title: str | None = None
-    school_level: str | None = None
+    school_level: SchoolLevel | None = None
     user_id: UUID | None = None
     job_preferences: JobPreferencesRead | None = None
     educations: list[EducationRead] = Field(default_factory=list)
@@ -339,7 +334,6 @@ class RecruiterRead(BaseModel):
     last_name: str | None = None
     city: str | None = None
     country: str | None = None
-    # region supprimé, non présent dans le dump
     phone_number: str | None = None
     sector_id: UUID | None = None
     user_id: UUID | None = None
@@ -410,11 +404,10 @@ class RequiredDocumentRead(BaseModel):
 
 class JobOfferRead(JobOfferBase):
     id: UUID
-    company_id: UUID
+    recruiter_id: UUID
     created_at: datetime
     updated_at: datetime | None = None
     recruiter: RecruiterRead | None = None
-    applications: list[ApplicationRead] = Field(default_factory=list)
     tags: list[TagRead] = Field(default_factory=list)
     cities: list[JobOfferCityRead] = Field(default_factory=list)
     languages: list[JobOfferLanguageRead] = Field(default_factory=list)
@@ -489,7 +482,7 @@ class ChatbotMessageRead(BaseModel):
     session_id: UUID | None = None
     user_id: UUID | None = None
     content: str
-    type: str
+    type: ChatbotMessageType
     created_at: datetime
     channel: ChatbotChannel | None = None
     lang: str | None = None
@@ -509,11 +502,11 @@ class ChatbotUnmatchedQuestionRead(BaseModel):
     request_message_id: UUID
     content: str
     lang: str | None = None
-    channel: str | None = None
+    channel: ChatbotChannel | None = None
     created_at: datetime
     top_candidates: dict | None = None
-    reason: str | None = None
-    status: str
+    reason: ChatbotUnmatchedReason | None = None
+    status: ChatbotUnmatchedStatus
     reviewed_at: datetime | None = None
     resolved_faq_entry_id: UUID | None = None
 

@@ -60,13 +60,18 @@ class User(Base):
     provider = Column(
         Enum(Provider, name="provider_enum", native_enum=False), nullable=False
     )
-    type = Column(String(8), nullable=False)
-    channel = Column(String(8))
+    role = Column(String(255), nullable=False)
+    user_type = Column(String(255))
     chatbot_feedback = relationship("ChatbotFeedback", back_populates="user")
     chatbot_unmatched_questions = relationship(
         "ChatbotUnmatchedQuestion", back_populates="user"
     )
-
+    chatbot_sessions = relationship("ChatbotSession", back_populates="user")
+    chatbot_messages = relationship("ChatbotMessage", back_populates="user")
+    candidate = relationship("Candidate", back_populates="user", uselist=False)
+    recruiter = relationship("Recruiter", back_populates="user", uselist=False)
+    searches = relationship("Search", back_populates="user")
+    sessions = relationship("UserSession", back_populates="user")
 
 class Candidate(Base):
     __tablename__ = "candidates"
@@ -131,11 +136,14 @@ class Experience(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     created_at = Column(DateTime(timezone=False))
     updated_at = Column(DateTime(timezone=False))
+    city = Column(String(255))
+    company_name = Column(String(255))
+    description = Column(String(255))
     # region supprimé, non présent dans le dump
-    end_date = Column(DateTime(timezone=True))
+    end_date = Column(DateTime(timezone=False))
     is_current = Column(Boolean)
     position = Column(String(255))
-    start_date = Column(DateTime(timezone=True), nullable=False)
+    start_date = Column(DateTime(timezone=False), nullable=False)
     candidate_id = Column(
         UUID(as_uuid=True), ForeignKey("candidates.id"), nullable=False
     )
@@ -210,10 +218,7 @@ class JobPreferencesContractType(Base):
     job_preferences_id = Column(
         UUID(as_uuid=True), ForeignKey("job_preferences.id"), primary_key=True
     )
-    contract_type = Column(
-        Enum(ContractType, name="job_preferences_contract_enum", native_enum=False),
-        primary_key=True,
-    )
+    contract_type = Column(String(255), primary_key=True)
 
     job_preferences = relationship(
         "JobPreferences", back_populates="contract_types"
@@ -261,7 +266,7 @@ class Recruiter(Base):
         DateTime(timezone=False), server_default=func.now(), nullable=False
     )
     updated_at = Column(DateTime(timezone=False), onupdate=func.now())
-    company_description = Column(OID)
+    company_description = Column(Text)
     company_email = Column(String(255))
     company_length = Column(String(255))
     company_linked_in_url = Column(String(255))
@@ -274,7 +279,6 @@ class Recruiter(Base):
     last_name = Column(String(255))
     city = Column(String(255))
     country = Column(String(255))
-    region = Column(String(255))
     phone_number = Column(String(255))
     sector_id = Column(UUID(as_uuid=True), ForeignKey("sector.id"))
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
@@ -295,7 +299,7 @@ class JobOffer(Base):
     )
     updated_at = Column(DateTime(timezone=False), onupdate=func.now())
     contract_type = Column(String(255))
-    description = Column(OID)
+    description = Column(Text)
     expiration_date = Column(DateTime(timezone=False))
     instructions = Column(String(255))
     is_featured = Column(Boolean)
@@ -309,12 +313,11 @@ class JobOffer(Base):
     status = Column(String(255))
     title = Column(String(255))
     work_country_location = Column(String(255))
-    channel = Column(String(8))
-    reason = Column(String(14))
-    status = Column(String(11), nullable=False, default="new")
-    #! back_populates="job_offer",
-    #!     cascade="all, delete-orphan",
-    #! )
+    company_id = Column(UUID(as_uuid=True), ForeignKey("recruiters.id"), nullable=False)
+
+    # La relation inverse
+    tag_links = relationship("JobOfferTag", back_populates="job_offer")
+    recruiter = relationship("Recruiter", back_populates="job_offers")
     tags = relationship(
         "Tag",
         secondary="job_offer_tags",
@@ -332,6 +335,10 @@ class JobOffer(Base):
         back_populates="job_offer",
         cascade="all, delete-orphan",
     )
+    cities = relationship("JobOfferCity", back_populates="job_offer")
+    languages = relationship("JobOfferLanguage", back_populates="job_offer")
+    applications = relationship("Application", back_populates="job_offer")
+    saved_by = relationship("SavedJobOffer", back_populates="job_offer")
 
 
 class JobOfferTag(Base):
@@ -509,7 +516,7 @@ class Search(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
 
-    user = relationship("User", back_populates="searches")
+    user = relationship("User")
 
 
 class EmailOtp(Base):

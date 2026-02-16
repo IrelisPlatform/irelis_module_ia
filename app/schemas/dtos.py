@@ -45,9 +45,9 @@ class JobOfferDto(CamelModel):
     description: str | None = None
     work_country_location: str | None = None
     work_cities: list[str] = Field(default_factory=list)
-    contract_type: str | None = None
-    status: str | None = None
-    job_type: str | None = None
+    contract_type: ContractType | None = None
+    status: JobOfferStatus | None = None
+    job_type: JobType | None = None
     salary: str | None = None
     published_at: datetime | None = None
     expiration_date: datetime | None = None
@@ -69,7 +69,7 @@ class JobOfferDto(CamelModel):
 class CandidateSkillDto(CamelModel):
     id: UUID
     name: str | None = None
-    level: str | None = None
+    level: SkillLevel | None = None
 
 
 class CandidateEducationDto(CamelModel):
@@ -83,7 +83,7 @@ class CandidateEducationDto(CamelModel):
 class CandidateLanguageDto(CamelModel):
     id: UUID
     language: str | None = None
-    level: str | None = None
+    level: LanguageLevel | None = None
 
 
 class CandidateExperienceDto(CamelModel):
@@ -99,11 +99,10 @@ class CandidateExperienceDto(CamelModel):
 
 class CandidatePreferenceDto(CamelModel):
     desired_position: str | None = None
-    contract_types: list[str] = Field(default_factory=list)
+    contract_types: list[ContractType] = Field(default_factory=list)
     availability: str | None = None
     pretentions_salarial: str | None = None
     country: str | None = None
-    city: str | None = None
     sector_ids: list[UUID] = Field(default_factory=list)
     sectors: list[str] = Field(default_factory=list)
 
@@ -116,8 +115,8 @@ class CandidateDto(CamelModel):
     presentation: str | None = None
     email: str | None = None
     phone_number: str | None = None
-    school_level: str | None = None
-    experience_level: str | None = None
+    school_level: SchoolLevel | None = None
+    experience_level: ExperienceLevel | None = None
     avatar_url: str | None = None
     birth_date: datetime | None = None
     linked_in_url: str | None = None
