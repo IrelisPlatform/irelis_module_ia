@@ -162,6 +162,7 @@ class SearchRepository:
             query = query.filter(JobOffer.contract_type.in_(contract_values))
 
         language = getattr(payload, "language", None)
+        
         if language:
             like_language = f"%{language}%"
             query = query.filter(
@@ -188,7 +189,7 @@ class SearchRepository:
         search_type = SearchType.BOOL
         target = SearchTarget.OFFRE
         query_text = ""
-        country = city = town = None
+        country = city = None
         type_contrat = None
         niveau_etude = None
         experience = None
@@ -201,7 +202,6 @@ class SearchRepository:
             query_text = payload.query or ""
             country = payload.country
             city = payload.city
-            town = payload.town
             type_contrat = getattr(payload, "type_contrat", None) or getattr(payload, "contract_type", None)
             niveau_etude = getattr(payload, "niveau_etude", None) or getattr(payload, "school_level", None)
             experience = getattr(payload, "experience", None) or getattr(payload, "experience_level", None)
@@ -214,7 +214,6 @@ class SearchRepository:
             target=target,
             country=country,
             city=city,
-            town=town,
             type_contrat=list_to_csv(type_contrat),
             niveau_etude=enum_to_str(niveau_etude),
             experience=enum_to_str(experience),

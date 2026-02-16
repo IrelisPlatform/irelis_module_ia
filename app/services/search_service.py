@@ -135,7 +135,6 @@ class SearchService:
             target=SearchTarget.OFFRE,
             country=_pick("country"),
             city=_pick("city"),
-            town=_pick("town"),
             contract_type=contract_types,
             language=_pick("language"),
             date_publication=_pick("date_publication"),

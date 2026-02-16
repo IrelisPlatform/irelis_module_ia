@@ -23,9 +23,7 @@ router = APIRouter()
 
 def _parse_search_offes_filters(
     query: str | None = Query(default=None),
-    country: str | None = Query(default=None),
     city: str | None = Query(default=None),
-    town: str | None = Query(default=None),
     contract_type: list[ContractType] | ContractType | None = Query(default=None),
     niveau_etude: SchoolLevel | None = Query(default=None),
     experience: ExperienceLevel | None = Query(default=None),
@@ -45,9 +43,7 @@ def _parse_search_offes_filters(
         query=query,
         type=SearchType.NOT,
         target=SearchTarget.OFFRE,
-        country=country,
         city=city,
-        town=town,
         contract_type=_to_list(contract_type),
         niveau_etude=niveau_etude,
         experience=experience,
@@ -70,6 +66,7 @@ def search_offers(
     size: int = Query(default=10, ge=1),
 ) -> JobOfferSearchResponse:
     """Search job offers by payload or contextually for a candidate."""
+    
     cache_key = make_cache_key("search_offers", filters, user_id, page, size)
     cached = APP_CACHE.get(cache_key)
     if cached[0]:

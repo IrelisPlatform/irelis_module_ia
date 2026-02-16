@@ -307,7 +307,6 @@ class MatchingService:
         """Compare seniority expectations between the two profiles."""
         candidate_level = self._normalize(getattr(candidate, "experience_level", None))
         offer_level = self._infer_offer_seniority(offer)
-        # print(offer)
         if candidate_level and offer_level:
             return 1.0 if candidate_level == offer_level else 0.3
         if candidate_level or offer_level:

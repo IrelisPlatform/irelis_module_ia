@@ -3,10 +3,10 @@ from __future__ import annotations
 from typing import Iterable
 
 from app.schemas import JobOfferDto, SearchCreate
+from app.services.dto_mappers import offer_to_dto
 from app.utils.search_filters import enum_to_str, normalize
 
 
-_COUNTRY_WEIGHT = 0.2
 _CITY_WEIGHT = 0.4
 _LANGUAGE_WEIGHT = 0.3
 _CONTRACT_WEIGHT = 0.2
@@ -52,7 +52,7 @@ def _matches_country(country: str | None, offer: JobOfferDto) -> bool:
 
 
 def _matches_city(payload: SearchCreate, offer: JobOfferDto) -> bool:
-    city = payload.city or payload.town
+    city = payload.city
     if not city:
         return False
     city_norm = normalize(city)
@@ -83,7 +83,8 @@ def _matches_language(language: str | None, offer: JobOfferDto) -> bool:
     lang_norm = normalize(language)
     if not lang_norm:
         return False
-    for value in offer.required_languages:
+    
+    for value in offer_to_dto(offer).required_languages:
         if normalize(value) == lang_norm:
             return True
     return False

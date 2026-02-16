@@ -9,7 +9,6 @@ from app.models import JobOffer, Tag
 
 
 def normalize(value: str | None) -> str | None:
-    # print(value)
     """Lowercase and trim incoming text."""
     if value is None:
         return None

@@ -51,8 +51,12 @@ class TTLCache:
 def _serialize_cache_value(value: Any) -> Any:
     if value is None:
         return None
+    # Priorité : si c'est un objet Pydantic (comme votre SearchCreate)
     if hasattr(value, "model_dump"):
-        return value.model_dump()
+        return _serialize_cache_value(value.model_dump())
+    if hasattr(value, "dict"): # Pour la compatibilité Pydantic v1
+        return _serialize_cache_value(value.dict())
+        
     if isinstance(value, (list, tuple, set)):
         return [_serialize_cache_value(item) for item in value]
     if isinstance(value, dict):

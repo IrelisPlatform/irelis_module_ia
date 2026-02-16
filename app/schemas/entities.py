@@ -80,7 +80,6 @@ class SearchRead(BaseModel):
     target: SearchTarget
     country: str | None = None
     city: str | None = None
-    town: str | None = None
     type_contrat: str | None = None
     niveau_etude: str | None = None
     experience: str | None = None
@@ -99,7 +98,6 @@ class SearchBase(BaseModel):
     target: SearchTarget | None = None
     country: str | None = None
     city: str | None = None
-    town: str | None = None
     contract_type: ContractType | list[ContractType] | None = None
     school_level: SchoolLevel | None = None
     experience_level: ExperienceLevel | None = None
