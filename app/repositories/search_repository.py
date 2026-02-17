@@ -16,7 +16,7 @@ from app.models import (
     Search,
     Tag,
 )
-from app.models.enums import SearchTarget, SearchType
+from app.models.enums import JobOfferStatus, SearchTarget, SearchType
 from app.utils.search_filters import (
     apply_text_search,
     as_list,
@@ -138,6 +138,7 @@ class SearchRepository:
         query = self._query()
         
         query = apply_text_search(query, getattr(payload, "query", None))
+        query = query.filter(JobOffer.status == JobOfferStatus.PUBLISHED)
         
         all_query = query
 
@@ -146,6 +147,7 @@ class SearchRepository:
         if country:
             normalized_country = normalize(country)
             query = query.filter(func.lower(JobOffer.work_country_location) == normalized_country)
+        
 
         city = getattr(payload, "city", None)
         if city:
