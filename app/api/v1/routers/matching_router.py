@@ -45,7 +45,7 @@ def compute_matching_score(
     return result
 
 @router.post(
-    '/mathing/cv/job_offer/{job_offer_id}',
+    '/matching/cv/job_offer/{job_offer_id}',
     # response_model=MatchingScoreResponse,
     tags=['matching']
 )
