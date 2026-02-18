@@ -108,7 +108,7 @@ class MatchingService:
         # Return simple dict or your specific MatchingScoreResponse object
         return {
             "score": round(score, 4),
-            "matched_skills": matched_skills
+            "matched_skills": ["not yet"]
         }
     
     def _score_cv(self, content, offer) -> tuple[float, list[str]]:
@@ -131,7 +131,6 @@ class MatchingService:
         cv_tokens = set(cv_text_norm.split())
         
         # Extract skills/keywords from Offer Description
-        # FIXED: Use getattr instead of .get()
         description = getattr(offer, "description", "")
         offer_desc_text = self._parse_rich_description2(description)
         offer_skills = self._extract_keywords2(offer_desc_text)
@@ -246,7 +245,7 @@ class MatchingService:
 
     def _salary_fit2(self, content: str, offer) -> float:
         """Neutral score if salary is missing."""
-        # FIXED: Use getattr
+        
         salary = getattr(offer, "salary", None)
         if not salary:
             return 1.0

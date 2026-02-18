@@ -99,10 +99,6 @@ def get_recommendations(
     k: int = Query(10, ge=1, le=50),
 ) -> CandidateRecommendationsResponse:
     """Return the top-k offers ranked for the provided candidate based on his profil."""
-    # cache_key = make_cache_key("recommendations", candidate_id, k)
-    # cached = APP_CACHE.get(cache_key)
-    # if cached[0]:
-    #     return cached[1]
 
     service = MatchingService(db)
     response = service.recommend_offers_for_candidate(candidate_id, k)
@@ -112,5 +108,4 @@ def get_recommendations(
             detail="Candidate Not Found",
         )
 
-    # APP_CACHE.set(cache_key, response)
     return response
