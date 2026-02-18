@@ -8,3 +8,5 @@ email-validator
 httpx
 pytest
 Faker
+python-multipart
+pypdf

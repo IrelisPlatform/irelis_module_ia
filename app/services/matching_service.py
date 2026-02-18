@@ -4,8 +4,12 @@ import re
 from dataclasses import dataclass
 from difflib import SequenceMatcher
 from uuid import UUID
+from fastapi import HTTPException
 
 from sqlalchemy.orm import Session
+
+import json
+
 
 from app.repositories.candidate_repository import CandidateRepository
 from app.repositories.offer_repository import OfferRepository
@@ -18,6 +22,7 @@ from app.schemas import (
     SourcingSearchResponse,
 )
 from app.services.dto_mappers import offer_to_dto
+from app.utils.offer_management import extract_text_from_rich_json
 from app.utils.cache import APP_CACHE, make_cache_key
 
 
@@ -73,37 +78,246 @@ class MatchingService:
         self.candidates = CandidateRepository(db)
         self.offers = OfferRepository(db)
         self.weights = (weights or MatchingWeights()).as_dict()
+        self.stop_words = {
+            "le", "la", "les", "un", "une", "des", "et", "ou", "de", "du", "en", "au", "aux", 
+            "ce", "cette", "pour", "par", "dans", "sur", "avec", "sans", "est", "sont", "a", 
+            "the", "and", "of", "to", "in", "on", "with", "for", "is", "are", "it", "that", "this"
+        }
+        # Define weights
+        self.weights = {
+            "coverage": 0.30,
+            "title_similarity": 0.20,
+            "geo_fit": 0.15,
+            "seniority": 0.10,
+            "language": 0.10,
+            "salary": 0.10,
+            "profile_focus": 0.05
+        } 
+
+    def matching_cv_job_offer(self, job_offer_id: UUID, content: str):
+        """Compute matching metrics for a cv/offer pair."""
+        
+        # Assuming self.offers is a repository/service that returns a JobOffer Object
+        offer = self.offers.get(job_offer_id) 
+        
+        if offer is None:
+            return None
+        
+        score, matched_skills = self._score_cv(content, offer)
+        
+        # Return simple dict or your specific MatchingScoreResponse object
+        return {
+            "score": round(score, 4),
+            "matched_skills": matched_skills
+        }
+    
+    def _score_cv(self, content, offer) -> tuple[float, list[str]]:
+        """Aggregate component scores into a final weighted score."""
+        components, matched_skills = self._compute_components2(content, offer)
+        
+        # Calculate weighted sum
+        score = sum(self.weights[name] * value for name, value in components.items())
+        
+        # Normalize to 0-100 scale
+        final_percentage = min(max(score, 0.0), 1.0) * 100
+        
+        return round(final_percentage, 2), matched_skills
+    
+    def _compute_components2(self, content: str, offer) -> tuple[dict[str, float], list[str]]:
+        """Break down the final matching score into weighted components."""
+        
+        # 1. Prepare Data
+        cv_text_norm = self._normalize_text2(content)
+        cv_tokens = set(cv_text_norm.split())
+        
+        # Extract skills/keywords from Offer Description
+        # FIXED: Use getattr instead of .get()
+        description = getattr(offer, "description", "")
+        offer_desc_text = self._parse_rich_description2(description)
+        offer_skills = self._extract_keywords2(offer_desc_text)
+        
+        # 2. Calculate Overlap
+        overlap = offer_skills.intersection(cv_tokens)
+        matched_skills = list(overlap)
+
+        # 3. Calculate Metrics
+        coverage = len(overlap) / len(offer_skills) if offer_skills else 0.0
+        
+        # Profile Focus: (Keywords matched / Total unique words in CV)
+        profile_focus = len(overlap) / len(cv_tokens) if cv_tokens else 0.0
+
+        components = {
+            "coverage": coverage,
+            "title_similarity": self._title_similarity2(content, offer),
+            "geo_fit": self._geo_fit2(content, offer),
+            "seniority": self._seniority_fit2(content, offer),
+            "language": self._language_fit2(content, offer),
+            "salary": self._salary_fit2(content, offer),
+            "profile_focus": profile_focus,
+        }
+
+        return components, matched_skills
+        
+    def _title_similarity2(self, content: str, offer) -> float:
+        """Check if words from the Job Title appear in the CV."""
+        # FIXED: Use getattr
+        title = getattr(offer, "title", "")
+        if not title: 
+            return 0.0
+        
+        title_keywords = self._extract_keywords2(title)
+        cv_keywords = self._extract_keywords2(content)
+        
+        if not title_keywords:
+            return 0.0
+
+        matches = title_keywords.intersection(cv_keywords)
+        return len(matches) / len(title_keywords)
+
+    def _geo_fit2(self, content: str, offer) -> float:
+        """Check if Country or City is mentioned in the CV."""
+        locations = []
+        
+        # FIXED: Use getattr for object attributes
+        country = getattr(offer, "work_country_location", None)
+        if country:
+            locations.append(country)
+        
+        # FIXED: Handle list of objects for cities
+        cities = getattr(offer, "cities", [])
+        for city_obj in cities:
+            # Check if city_obj is a dict or an object
+            city_name = city_obj.get("city") if isinstance(city_obj, dict) else getattr(city_obj, "city", "")
+            locations.append(city_name)
+            
+        content_norm = self._normalize_text2(content)
+        
+        for loc in locations:
+            if loc and self._normalize_text2(loc) in content_norm:
+                return 1.0 # Match found
+        
+        return 0.0
+
+    def _seniority_fit2(self, content: str, offer) -> float:
+        """Check for years patterns in offer description vs CV."""
+        # FIXED: Use getattr
+        description = getattr(offer, "description", "")
+        desc_text = self._parse_rich_description2(description)
+        required_years = re.findall(r"(\d+)\s*(?:an|ans|year|years)", desc_text, re.IGNORECASE)
+        
+        if not required_years:
+            return 1.0 
+            
+        max_required = max([int(y) for y in required_years])
+        
+        # Look for years in CV
+        cv_years = re.findall(r"(\d+)\s*(?:an|ans|year|years)", content, re.IGNORECASE)
+        if not cv_years:
+            return 0.0
+            
+        max_cv = max([int(y) for y in cv_years])
+        
+        if max_cv >= max_required:
+            return 1.0
+        else:
+            return max_cv / max_required
+
+    def _language_fit2(self, content: str, offer) -> float:
+        """Check if required languages are in CV."""
+        # FIXED: Handle list of objects for languages
+        languages = getattr(offer, "languages", [])
+        required_langs = []
+        
+        for l in languages:
+             # Check if l is a dict or an object
+            lang_name = l.get("language") if isinstance(l, dict) else getattr(l, "language", "")
+            required_langs.append(lang_name)
+        
+        if not required_langs:
+            return 1.0
+            
+        content_norm = self._normalize_text2(content)
+        matches = 0
+        for lang in required_langs:
+            if lang and self._normalize_text2(lang) in content_norm:
+                matches += 1
+                
+        return matches / len(required_langs)
+
+    def _salary_fit2(self, content: str, offer) -> float:
+        """Neutral score if salary is missing."""
+        # FIXED: Use getattr
+        salary = getattr(offer, "salary", None)
+        if not salary:
+            return 1.0
+        return 0.5 
+
+    # --- 3. HELPER UTILS ---
+
+    def _normalize_text2(self, text: str) -> str:
+        if not text: return ""
+        text = text.lower()
+        return re.sub(r'[^\w\s]', ' ', text)
+
+    def _extract_keywords2(self, text: str) -> set[str]:
+        tokens = self._normalize_text2(text).split()
+        return {word for word in tokens if word not in self.stop_words and len(word) > 2}
+
+    def _parse_rich_description2(self, json_desc_str: str) -> str:
+        if not json_desc_str: return ""
+        try:
+            # Check if it's actually JSON
+            if not isinstance(json_desc_str, str) or not json_desc_str.strip().startswith("{"):
+                return str(json_desc_str)
+                
+            data = json.loads(json_desc_str)
+            root = data.get("root", {})
+            
+            def recurse(node):
+                text = ""
+                if "text" in node: text += node["text"] + " "
+                if "children" in node:
+                    for child in node["children"]:
+                        text += recurse(child)
+                return text
+                
+            return recurse(root)
+        except:
+            return str(json_desc_str)
+
+    #?========================================================================================================
+    #? HERE IS just for a simple score
+    #?========================================================================================================
 
     def score_candidate_for_offer(
         self,
         candidate_id: UUID,
         offer_id: UUID,
-    ) -> MatchingScoreResponse | None:
+    ) :
+        #-> MatchingScoreResponse | None
         """Compute matching metrics for a candidate/offer pair."""
-        cache_key = make_cache_key("matching:score", candidate_id, offer_id)
-        found, cached = APP_CACHE.get(cache_key)
-        if found:
-            return cached
         candidate = self.candidates.get(candidate_id)
         offer = self.offers.get(offer_id)
+        
         if candidate is None or offer is None:
             return None
-
         score, matched_skills = self._score_candidate(candidate, offer)
         response = MatchingScoreResponse(score=round(score, 4), matched_skills=matched_skills)
-        APP_CACHE.set(cache_key, response)
+        # APP_CACHE.set(cache_key, response)
         return response
-
+    
+    
+    
     def rank_candidates_for_offer(
         self,
         offer_id: UUID,
         limit: int = 10,
     ) -> SourcingSearchResponse | None:
         """Rank candidates for a given offer and return a sourcing response."""
-        cache_key = make_cache_key("matching:rank_candidates", offer_id, limit=limit)
-        found, cached = APP_CACHE.get(cache_key)
-        if found:
-            return cached
+        # cache_key = make_cache_key("matching:rank_candidates", offer_id, limit=limit)
+        # found, cached = APP_CACHE.get(cache_key)
+        # if found:
+        #     return cached
         offer = self.offers.get(offer_id)
         if offer is None:
             return None
@@ -124,7 +338,7 @@ class MatchingService:
 
         matches.sort(key=lambda match: match.score, reverse=True)
         response = SourcingSearchResponse(candidates=matches[:limit])
-        APP_CACHE.set(cache_key, response)
+        # APP_CACHE.set(cache_key, response)
         return response
 
     def recommend_offers_for_candidate(
@@ -133,10 +347,10 @@ class MatchingService:
         limit: int = 10,
     ) -> CandidateRecommendationsResponse | None:
         """Rank offers for a candidate and return a recommendation payload."""
-        cache_key = make_cache_key("matching:recommend_offers", candidate_id, limit=limit)
-        found, cached = APP_CACHE.get(cache_key)
-        if found:
-            return cached
+        # cache_key = make_cache_key("matching:recommend_offers", candidate_id, limit=limit)
+        # found, cached = APP_CACHE.get(cache_key)
+        # if found:
+        #     return cached
         candidate = self.candidates.get(candidate_id)
         if candidate is None:
             return None
@@ -155,7 +369,7 @@ class MatchingService:
 
         ranked_offers.sort(key=lambda item: item.score, reverse=True)
         response = CandidateRecommendationsResponse(offers=ranked_offers[:limit])
-        APP_CACHE.set(cache_key, response)
+        # APP_CACHE.set(cache_key, response)
         return response
 
     # ------------------------------------------------------------------
@@ -186,12 +400,16 @@ class MatchingService:
             "profile_focus": profile_focus,
         }
         return components, matched_skills
+    
+    
+
 
     def _score_candidate(self, candidate, offer) -> tuple[float, list[str]]:
         """Aggregate component scores into a final weighted score."""
         components, matched_skills = self._compute_components(candidate, offer)
         score = sum(self.weights[name] * value for name, value in components.items())
         return score, matched_skills
+    
 
     # ------------------------------------------------------------------
     # Helpers
@@ -227,6 +445,7 @@ class MatchingService:
     # --- coverage & similarity ---
     def _title_similarity(self, candidate, offer) -> float:
         """Score how similar candidate and offer titles/texts are."""
+        
         offer_title = self._normalize(getattr(offer, "title", None))
         candidate_titles = self._candidate_titles(candidate)
         
