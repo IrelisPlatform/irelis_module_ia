@@ -28,6 +28,8 @@ from .entities import (
     Tag,
     User,
     UserSession,
+    UserBlock,
+    Message
 )
 
 __all__ = [
@@ -60,4 +62,6 @@ __all__ = [
     "User",
     "UserSession",
     "Tag",
+    "UserBlock",
+    "Message"
 ]

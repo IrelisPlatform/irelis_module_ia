@@ -9,6 +9,7 @@ from app.api.v1.routers import (
     recruiter_router,
     search_router,
     sourcing_router,
+    message_router
 )
 from app.db.init_db import init_db
 from app.db.session import SessionLocal
@@ -30,6 +31,8 @@ app.include_router(search_router.router, prefix="/api/v1")
 app.include_router(matching_router.router, prefix="/api/v1")
 app.include_router(sourcing_router.router, prefix="/api/v1")
 app.include_router(chatbot_router.router, prefix="/api/v1")
+app.include_router(message_router.router, prefix="/api/v1")
+
 
 
 @app.on_event("startup")

@@ -133,3 +133,39 @@ class CandidateDto(CamelModel):
     preference: CandidatePreferenceDto | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
+    
+
+#! ======================================================================
+#! Chat management
+#! ======================================================================
+
+class MessageBase(BaseModel):
+    content: str
+
+class MessageCreate(MessageBase):
+    receiver_id: UUID
+    sender_id: UUID
+
+class MessageResponse(MessageBase):
+    id: UUID
+    sender_id: UUID
+    receiver_id: UUID
+    created_at: datetime
+    is_read: bool
+    model_config = ConfigDict(from_attributes=True)
+
+# --- Inbox ---
+class ConversationSummary(BaseModel):
+    partner_id: UUID
+    partner_name: str  # Add Email or Name of the partner 
+    last_message: str
+    last_message_at: datetime
+    unread_count: int
+
+# --- Blocage ---
+class BlockCreate(BaseModel):
+    user_id_to_block: UUID
+
+class BlockResponse(BaseModel):
+    message: str
+    is_blocked: bool

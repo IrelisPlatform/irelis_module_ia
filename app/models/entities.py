@@ -779,3 +779,27 @@ class ChatbotFeedback(Base):
         "ChatbotMessage", back_populates="feedback"
     )
     faq_entry = relationship("ChatbotFaqEntry", back_populates="feedback")
+
+#! ======================================================================
+#! Gestion de la messagerie
+#! ======================================================================
+class UserBlock(Base):
+    __tablename__ = "user_blocks"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    blocker_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    blocked_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime(timezone=False), server_default=func.now())
+
+class Message(Base):
+    __tablename__ = "messages"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    sender_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    receiver_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=False), server_default=func.now())
+    is_read = Column(Boolean, default=False)
+
+    sender = relationship("User", foreign_keys=[sender_id])
+    receiver = relationship("User", foreign_keys=[receiver_id])

@@ -35,6 +35,7 @@ from .entities import (
     SkillRead,
     UserRead,
     UserSessionRead,
+    
 )
 from .dtos import (
     CandidateDto,
@@ -46,6 +47,12 @@ from .dtos import (
     JobOfferDto,
     RequiredDocumentDto,
     TagDto,
+    BlockCreate,
+    BlockResponse,
+    ConversationSummary,
+    MessageCreate,
+    MessageResponse
+    
 )
 from .chatbot import (
     ChatbotFeedbackCreate,
@@ -108,4 +115,9 @@ __all__ = [
     "JobOfferDto",
     "RequiredDocumentDto",
     "TagDto",
+    "BlockCreate",
+    "BlockResponse",
+    "ConversationSummary",
+    "MessageCreate",
+    "MessageResponse"
 ]
