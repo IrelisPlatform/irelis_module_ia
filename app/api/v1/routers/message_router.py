@@ -17,7 +17,7 @@ from app.schemas import (
 )
 from app.services.message_service import ChatService
 
-router = APIRouter(prefix="/chat", tags=["Messagerie"])
+router = APIRouter(prefix="/chat", tags=["Messages"])
 
 @router.post("/send", response_model=MessageResponse)
 def send_message(
