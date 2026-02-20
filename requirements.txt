@@ -10,3 +10,4 @@ pytest
 Faker
 python-multipart
 pypdf
+google-genai

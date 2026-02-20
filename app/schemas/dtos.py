@@ -29,14 +29,12 @@ class CamelModel(BaseModel):
         alias_generator=to_camel,
     )
 
+class RequiredDocumentDto(CamelModel):
+    type: DocumentType | None = None
 
 class TagDto(CamelModel):
     name: str | None = None
     type: str | None = None
-
-
-class RequiredDocumentDto(CamelModel):
-    type: DocumentType | None = None
 
 
 class JobOfferDto(CamelModel):

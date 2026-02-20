@@ -9,7 +9,8 @@ from app.api.v1.routers import (
     recruiter_router,
     search_router,
     sourcing_router,
-    message_router
+    message_router,
+    ai_router
 )
 from app.db.init_db import init_db
 from app.db.session import SessionLocal
@@ -26,12 +27,12 @@ app.add_middleware(
 
 app.include_router(candidate_router.router, prefix="/api/v1/candidats")
 # app.include_router(recruiter_router.router, prefix="/api/v1")
-# app.include_router(offer_router.router, prefix="/api/v1")
 app.include_router(search_router.router, prefix="/api/v1")
 app.include_router(matching_router.router, prefix="/api/v1")
 app.include_router(sourcing_router.router, prefix="/api/v1")
 app.include_router(chatbot_router.router, prefix="/api/v1")
 app.include_router(message_router.router, prefix="/api/v1")
+app.include_router(ai_router.router, prefix="/api/v1")
 
 
 
