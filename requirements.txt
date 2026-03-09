@@ -12,3 +12,4 @@ python-multipart
 pypdf
 google-genai
 Unidecode
+jinja2
