@@ -11,3 +11,4 @@ Faker
 python-multipart
 pypdf
 google-genai
+Unidecode

@@ -84,7 +84,7 @@ class SearchRepository:
             country = candidate.country
         if country:
             normalized_country = normalize(country)
-            query = query.filter(func.lower(JobOffer.work_country_location) == normalized_country)
+            query = query.filter(func.lower(func.unaccent(JobOffer.work_country_location)) == normalized_country)
 
         city = filters.get("city")
         if not city and candidate_preferences and candidate_preferences.city:
@@ -95,7 +95,7 @@ class SearchRepository:
             normalized_city = normalize(city)
             query = query.filter(
                 JobOffer.cities.any(
-                    func.lower(JobOfferCity.city) == normalized_city
+                    func.lower(func.unaccent(JobOfferCity.city)) == normalized_city
                 )
             )
 
@@ -109,7 +109,7 @@ class SearchRepository:
             normalized_skills = [normalize(skill) for skill in skill_values if skill]
             if normalized_skills:
                 query = query.filter(
-                    JobOffer.tags.any(func.lower(Tag.name).in_(normalized_skills))
+                    JobOffer.tags.any(func.lower(func.unaccent(Tag.name)).in_(normalized_skills))
                 )
 
         date_publication = parse_datetime(filters.get("date_publication"))
@@ -118,12 +118,12 @@ class SearchRepository:
 
         language = filters.get("language")
         if language:
-            like_language = f"%{language}%"
+            like_language = f"%{normalize(language)}%"
             query = query.filter(
                 or_(
-                    JobOffer.title.ilike(like_language),
+                    func.lower(func.unaccent(JobOffer.title)).like(like_language),
                     JobOffer.languages.any(
-                        JobOfferLanguage.language.ilike(like_language)
+                        func.lower(func.unaccent(JobOfferLanguage.language)).like(like_language)
                     ),
                 )
             )
@@ -146,7 +146,7 @@ class SearchRepository:
         
         if country:
             normalized_country = normalize(country)
-            query = query.filter(func.lower(JobOffer.work_country_location) == normalized_country)
+            query = query.filter(func.lower(func.unaccent(JobOffer.work_country_location)) == normalized_country)
         
 
         city = getattr(payload, "city", None)
@@ -154,7 +154,7 @@ class SearchRepository:
             normalized_city = normalize(city)
             query = query.filter(
                 JobOffer.cities.any(
-                    func.lower(JobOfferCity.city) == normalized_city
+                    func.lower(func.unaccent(JobOfferCity.city)) == normalized_city
                 )
             )
 
@@ -166,12 +166,12 @@ class SearchRepository:
         language = getattr(payload, "language", None)
         
         if language:
-            like_language = f"%{language}%"
+            like_language = f"%{normalize(language)}%"
             query = query.filter(
                 or_(
-                    JobOffer.title.ilike(like_language),
+                    func.lower(func.unaccent(JobOffer.title)).like(like_language),
                     JobOffer.languages.any(
-                        JobOfferLanguage.language.ilike(like_language)
+                        func.lower(func.unaccent(JobOfferLanguage.language)).like(like_language)
                     ),
                 )
             )

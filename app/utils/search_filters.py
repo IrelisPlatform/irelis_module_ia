@@ -2,17 +2,19 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Iterable
+from unidecode import unidecode
 
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 
 from app.models import JobOffer, Tag
 
 
 def normalize(value: str | None) -> str | None:
-    """Lowercase and trim incoming text."""
+    """Lowercase, trim and remove accents from incoming text."""
     if value is None:
         return None
-    normalized = value.strip().lower()
+    # Supprime les accents et les caractères spéciaux
+    normalized = unidecode(value).strip().lower()
     return normalized or None
 
 
@@ -75,11 +77,14 @@ def apply_text_search(query, raw_terms):
 
     search_clauses = []
     for term in terms:
-        like_term = f"%{term}%"
+        normalized_term = normalize(term)
+        if not normalized_term:
+            continue
+        like_term = f"%{normalized_term}%"
         search_clauses.append(
             or_(
-                JobOffer.title.ilike(like_term),
-                JobOffer.tags.any(Tag.name.ilike(like_term)),
+                func.lower(func.unaccent(JobOffer.title)).like(like_term),
+                JobOffer.tags.any(func.lower(func.unaccent(Tag.name)).like(like_term)),
             )
         )
 

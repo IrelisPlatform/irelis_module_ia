@@ -1,5 +1,6 @@
 import logging
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 
 from app.db import base  # noqa: F401 imported for side-effects
 from app.db.base import Base
@@ -10,6 +11,16 @@ logger = logging.getLogger(__name__)
 def init_db(db: Session) -> None:
     """Create database tables if they do not exist."""
     logger.info("Initializing database")
+
+    # Enable unaccent extension
+    try:
+        db.execute(text("CREATE EXTENSION IF NOT EXISTS unaccent"))
+        db.commit()
+        logger.info("unaccent extension enabled")
+    except Exception as e:
+        logger.error(f"Could not enable unaccent extension: {e}")
+        db.rollback()
+        
     bind = db.get_bind()
     Base.metadata.create_all(bind=bind)
     logger.info("Default admin user created")

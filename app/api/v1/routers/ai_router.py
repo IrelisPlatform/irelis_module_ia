@@ -38,7 +38,7 @@ async def extract_job_offer_file(
     
 @router.post("/extract-job-offer/text", response_model=JobOfferDto)
 async def extract_job_offer_text(
-    text: str
+    text: str = Form(...)
 ) -> JobOfferDto:
     """
     Extract all information about job_offer from text
