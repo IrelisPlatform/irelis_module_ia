@@ -67,10 +67,10 @@ def search_offers(
 ) -> JobOfferSearchResponse:
     """Search job offers by payload or contextually for a candidate."""
     
-    cache_key = make_cache_key("search_offers", filters, user_id, page, size)
-    cached = APP_CACHE.get(cache_key)
-    if cached[0]:
-        return cached[1]
+    # cache_key = make_cache_key("search_offers", filters, user_id, page, size)
+    # ached = APP_CACHE.get(cache_key)
+    # if cached[0]:
+    #     return cached[1]
 
     service = SearchService(db)
     if user_id is None:
@@ -107,7 +107,7 @@ def search_offers(
         first=first,
         last=last,
     )
-    APP_CACHE.set(cache_key, response)
+    # APP_CACHE.set(cache_key, response)
     return response
 
 

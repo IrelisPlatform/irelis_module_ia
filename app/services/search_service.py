@@ -23,12 +23,12 @@ class SearchService:
 
     def search_by_payload(self, payload: SearchCreate) -> list[JobOfferDto]:
         """Search offers with explicit payload filters."""
-        cache_key = make_cache_key("search:payload", payload)
-        found, cached = APP_CACHE.get(cache_key)
-        if found:
-            return cached
+        # cache_key = make_cache_key("search:payload", payload)
+        # found, cached = APP_CACHE.get(cache_key)
+        # if found:
+        #     return cached
         offers = [offer_to_dto(offer) for offer in self.repo.search_by_payload(payload)]
-        APP_CACHE.set(cache_key, offers)
+        # APP_CACHE.set(cache_key, offers)
         return offers
 
 

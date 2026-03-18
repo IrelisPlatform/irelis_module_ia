@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
 from app.models.enums import (
     ContractType,
@@ -167,3 +167,11 @@ class BlockCreate(BaseModel):
 class BlockResponse(BaseModel):
     message: str
     is_blocked: bool
+    
+# Le nouveau schéma pour forcer Gemini à renvoyer un tableau
+class JobOfferList(BaseModel):
+    offers: list[JobOfferDto]
+
+# Le schéma pour la requête de ton endpoint
+class ScrapeRequest(BaseModel):
+    url: HttpUrl

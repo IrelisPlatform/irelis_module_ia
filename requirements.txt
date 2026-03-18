@@ -13,3 +13,6 @@ pypdf
 google-genai
 Unidecode
 jinja2
+playwright
+beautifulsoup4
+markdownify
