@@ -5,7 +5,6 @@ from uuid import UUID
 
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, selectinload
-from app.utils.offer_scoring import rank_offers_by_search
 
 from app.models import (
     Candidate,
@@ -59,7 +58,6 @@ class SearchRepository:
         query = self._query()
 
         query = apply_text_search(query, filters.get("query"))
-        all_query = query
 
         candidate_preferences = getattr(candidate, "job_preferences", None)
 
@@ -127,11 +125,15 @@ class SearchRepository:
                     ),
                 )
             )
+
+        if payload and payload.query:
+            query = query.order_by(
+                func.lower(func.unaccent(JobOffer.title))
+                .like(f"%{normalize(payload.query)}%")
+                .desc()
+            )
             
-        filter_list = query.all()
-        complet_list = all_query.all()
-        
-        return filter_list + rank_offers_by_search([i for i in complet_list if i not in filter_list],payload)
+        return query.all()
 
     def search_by_payload(self, payload: "SearchCreate") -> list[JobOffer]:
         """Search offers using the provided payload filters only."""
@@ -140,8 +142,6 @@ class SearchRepository:
         query = apply_text_search(query, getattr(payload, "query", None))
         query = query.filter(JobOffer.status == JobOfferStatus.PUBLISHED)
         
-        all_query = query
-
         country = getattr(payload, "country", None)
         
         if country:
@@ -180,10 +180,14 @@ class SearchRepository:
         if date_publication:
             query = query.filter(JobOffer.published_at >= date_publication)
 
-        filter_list = query.all()
-        complet_list = all_query.all()
-        
-        return filter_list + rank_offers_by_search([i for i in complet_list if i not in filter_list],payload)
+        if payload.query:
+            query = query.order_by(
+                func.lower(func.unaccent(JobOffer.title))
+                .like(f"%{normalize(payload.query)}%")
+                .desc()
+            )
+
+        return query.all()
 
 
     def record_search(self, user_id: UUID, payload: "SearchCreate" | None) -> None:

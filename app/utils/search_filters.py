@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Iterable
 from unidecode import unidecode
 
-from sqlalchemy import or_, func
+from sqlalchemy import or_, func, literal
 
 from app.models import JobOffer, Tag
 
@@ -55,6 +55,37 @@ def list_to_csv(value) -> str | None:
     return ", ".join(normalized) if normalized else None
 
 
+def get_search_clauses(terms: list[str], raw_terms: str):
+    """
+    Generate search clauses for the given terms,
+    prioritizing exact matches of the raw terms.
+    """
+    search_clauses = []
+    # Add a clause for the exact match of the raw (unprocessed) query
+    if raw_terms and len(raw_terms.strip()) > 1:
+        exact_match_term = f"%{normalize(raw_terms)}%"
+        search_clauses.append(
+            or_(
+                func.lower(func.unaccent(JobOffer.title)).like(exact_match_term),
+                JobOffer.tags.any(
+                    func.lower(func.unaccent(Tag.name)).like(exact_match_term)
+                ),
+            )
+        )
+    for term in terms:
+        normalized_term = normalize(term)
+        if not normalized_term:
+            continue
+        like_term = f"%{normalized_term}%"
+        search_clauses.append(
+            or_(
+                func.lower(func.unaccent(JobOffer.title)).like(like_term),
+                JobOffer.tags.any(func.lower(func.unaccent(Tag.name)).like(like_term)),
+            )
+        )
+    return search_clauses
+
+
 def apply_text_search(query, raw_terms):
     """Apply LIKE-based search over multiple offer fields."""
     if not raw_terms:
@@ -75,17 +106,6 @@ def apply_text_search(query, raw_terms):
     if not terms:
         return query
 
-    search_clauses = []
-    for term in terms:
-        normalized_term = normalize(term)
-        if not normalized_term:
-            continue
-        like_term = f"%{normalized_term}%"
-        search_clauses.append(
-            or_(
-                func.lower(func.unaccent(JobOffer.title)).like(like_term),
-                JobOffer.tags.any(func.lower(func.unaccent(Tag.name)).like(like_term)),
-            )
-        )
+    search_clauses = get_search_clauses(terms, raw_terms)
 
     return query.filter(or_(*search_clauses))
