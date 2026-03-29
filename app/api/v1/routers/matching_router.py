@@ -45,19 +45,24 @@ def compute_matching_score(
     return result
 
 @router.post(
-    '/matching/cv/job_offer/{job_offer_id}',
+    '/matching/cv/job_offer',
     # response_model=MatchingScoreResponse,
     tags=['matching']
 )
 async def compute_matching_score_cv(
     db: Annotated[Session, Depends(deps.get_db)],
-    job_offer_id: UUID,
+    link: str = Query(..., alias="link to the job offer"),
     file: UploadFile = File(...)
 ):
     """Return the matchig percentage between a cv and a job offer."""
     if file.content_type != "application/pdf":
         raise HTTPException(status_code=400, detail="File must be a PDF")
     try:
+        if "irelis.net/jobs/" in link:
+            job_offer_id_str = link[-36:]
+            job_offer_id = UUID(job_offer_id_str)
+        else:
+            raise HTTPException(status_code=400, detail="Invalid job offer link format")
         reader = PdfReader(file.file)
         full_text = []
 
@@ -67,7 +72,8 @@ async def compute_matching_score_cv(
                 full_text.append(text)
         if len(full_text) == 0:
             raise HTTPException(status_code=500, detail="Failed to read content of the pdf")
-        full_text = [ line.replace(' ', '')for line in full_text]
+        
+        full_text = [line.replace(' ', '').replace('\n', '') for line in full_text]
         final_content =  "".join(full_text)
 
         service = MatchingService(db)

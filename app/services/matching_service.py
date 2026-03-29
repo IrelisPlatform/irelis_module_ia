@@ -57,10 +57,10 @@ SENIORITY_KEYWORDS = {
 class MatchingWeights:
     coverage: float = 0.30
     title_similarity: float = 0.20
-    geo_fit: float = 0.15
+    geo_fit: float = 0.25
     seniority: float = 0.10
     language: float = 0.10
-    salary: float = 0.10
+    salary: float = 0.00
     profile_focus: float = 0.05
 
     def as_dict(self) -> dict[str, float]:
@@ -125,13 +125,14 @@ class MatchingService:
     
     def _compute_components2(self, content: str, offer) -> tuple[dict[str, float], list[str]]:
         """Break down the final matching score into weighted components."""
-        
         # 1. Prepare Data
         cv_text_norm = self._normalize_text2(content)
         cv_tokens = set(cv_text_norm.split())
         
         # Extract skills/keywords from Offer Description
         description = getattr(offer, "description", "")
+        # description =  """{\"root\":{\"children\":[{\"children\":[{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\"L'ACMS recherche des candidats (HiF) hautement qualifiés pour mener les missions de\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\"Data Analyst dans le cadre d'un projet.\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\"Qui recrutons nous ?\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\"Le Data Analyst sera responsable de I'extraction, le nettoyage et I'analyse des données\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\"du projet.\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\"Missions essentielles\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\". Extraire et nettoyer des données à partir de sources variées (bases\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\"internationales DHS, MICS, rapports de subventions, bases administratives) ; . Effectuer des analyses statistiques descriptives et inférentielles sur des données de santé ; . Préparer des jeux de données pour analyse (data wrangling, transformation) ; . Contribuer à la production de rapports d'analyse et de synthèses de données ; .\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\". Assister le Senior Data Scientist dans le développement de modèles\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\"statistiques ; . Documenter les processus d'extraction et d'analyse pour garantir la\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\"reproductibilité ; . Participer au contrôle qualité des données.\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\"Qualifications et compétences requises :\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\". Être titulaire d'un Maitrise/Master en statistiques, biostatistiques, data science,\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\"économétrie ou domaine connexe ; (8 points)\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\". Avoir au moins 3 ans d'expérience dans l'analyse des données (idéalement dans\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\"le secteur de la santé) ; (8 Points)\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\". Maîtrise avancée de R eUou Python pour J'analyse de données (8 points) ; . Bonne connaissance de STATA, SPSS ou SAS (8 points) ;\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\"Références et autres compétences souhaitées : . Expérience en manipulation de grandes bases de données (data cleaning, data wrangling) ; . Connaissance des enquêtes DHS, tUICS ou autres bases de données sanitaires\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\"internationales ; . Capacité à produire des visualisations claires (ggplot2, matplotlib, etc.) ; o Expérience de travail avec des données de programmes de santé en Afrique est\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\"un atout ; . Parler couramment le français et avoir une connaissance pratique de J'anglais.\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\"Comment constituer votre Dossier de candidature ?\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":9,\"mode\":\"normal\",\"style\":\"\",\"text\":\"Le dossier doit comporter : .\",\"type\":\"text\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\" Une lettre de motivation (une page maximum).\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\". Un Curriculum Vitae avec les noms et adresses de trois références. Une\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\"vérification des références sera effectuée pour le candidat retenu.\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\". Une photocopie d'une pièce d'identification valide.\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\". Une photocopie du diplôme requis.\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\". Les justificatifs des expériences professionnelles.\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\"Clause relative aux candidatures des fonctionnaires\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\"Le fonctionnaire qui collabore avec I'ACMS dans le cadre de cette mission devra\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\"fournir la preuve de son désengagement avec son administration d'origine avant\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\"la signature de son contrat.\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\"Toute information erronée, falsifiée ou dissimulée, découverte au cours du\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\"processus de recrutement ou après l'embauche, entraînera la rupture immédiate\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\"du contrat, sans préjudice des autres mesures administratives applicables.\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\"Les dossiers complets doivent être envoyés uniquement par email à l'adresse suivante\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\": CM_recrutement@acms-cmr.org\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\"Aucune candidature physique ne sera acceptée.\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\"Politique RH de I'AGMS\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\". Seuls les candidats présélectionnés seront contactés\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\". L'ACIVS garantit l'égalité des chances et encourage vivement les candidatures\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\"féminines.\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\"informations clés sur la mission : . Type de contrat : Consultation\",\"type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\",\"text\":\"o Date de début de mission souhaitée . Avril 2026\",\"type\":\"text\",\"version\":1}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textFormat\":0,\"textStyle\":\"\"}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"root\",\"version\":1}}""""
+        
         offer_desc_text = self._parse_rich_description2(description)
         offer_skills = self._extract_keywords2(offer_desc_text)
         
@@ -159,47 +160,42 @@ class MatchingService:
         
     def _title_similarity2(self, content: str, offer) -> float:
         """Check if words from the Job Title appear in the CV."""
-        # FIXED: Use getattr
         title = getattr(offer, "title", "")
         if not title: 
             return 0.0
         
         title_keywords = self._extract_keywords2(title)
-        cv_keywords = self._extract_keywords2(content)
+        # cv_keywords = self._extract_keywords2(content)
         
         if not title_keywords:
             return 0.0
 
-        matches = title_keywords.intersection(cv_keywords)
-        return len(matches) / len(title_keywords)
+        result = sum(1 for word in title_keywords if word in content) / len(title_keywords)
+        
+        return result
 
     def _geo_fit2(self, content: str, offer) -> float:
         """Check if Country or City is mentioned in the CV."""
         locations = []
         
-        # FIXED: Use getattr for object attributes
-        country = getattr(offer, "work_country_location", None)
-        if country:
-            locations.append(country)
-        
         # FIXED: Handle list of objects for cities
         cities = getattr(offer, "cities", [])
         for city_obj in cities:
-            # Check if city_obj is a dict or an object
             city_name = city_obj.get("city") if isinstance(city_obj, dict) else getattr(city_obj, "city", "")
             locations.append(city_name)
-            
+        
         content_norm = self._normalize_text2(content)
         
         for loc in locations:
+            print(content_norm)
             if loc and self._normalize_text2(loc) in content_norm:
-                return 1.0 # Match found
+                return 1.0
         
         return 0.0
 
     def _seniority_fit2(self, content: str, offer) -> float:
         """Check for years patterns in offer description vs CV."""
-        # FIXED: Use getattr
+       
         description = getattr(offer, "description", "")
         desc_text = self._parse_rich_description2(description)
         required_years = re.findall(r"(\d+)\s*(?:an|ans|year|years)", desc_text, re.IGNORECASE)
@@ -256,7 +252,7 @@ class MatchingService:
     def _normalize_text2(self, text: str) -> str:
         if not text: return ""
         text = text.lower()
-        return re.sub(r'[^\w\s]', ' ', text)
+        return re.sub(r'[^\w\s]', '', text)
 
     def _extract_keywords2(self, text: str) -> set[str]:
         tokens = self._normalize_text2(text).split()
@@ -304,7 +300,6 @@ class MatchingService:
         response = MatchingScoreResponse(score=round(score, 4), matched_skills=matched_skills)
         # APP_CACHE.set(cache_key, response)
         return response
-    
     
     
     def rank_candidates_for_offer(
@@ -400,8 +395,6 @@ class MatchingService:
         }
         return components, matched_skills
     
-    
-
 
     def _score_candidate(self, candidate, offer) -> tuple[float, list[str]]:
         """Aggregate component scores into a final weighted score."""
