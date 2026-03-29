@@ -175,3 +175,17 @@ class JobOfferList(BaseModel):
 # Le schéma pour la requête de ton endpoint
 class ScrapeRequest(BaseModel):
     url: HttpUrl
+
+
+class ScoreBreakdown(BaseModel):
+    skills_score: int = Field(description="Score sur 100 pour les compétences techniques et soft skills")
+    experience_score: int = Field(description="Score sur 100 pour la séniorité et les années d'expérience pertinentes")
+    geo_score: int = Field(description="Score sur 100 pour la localisation (100 si le candidat est dans le pays/ville, sinon moins)")
+    language_score: int = Field(description="Score sur 100 pour la maîtrise des langues exigées")
+
+class MatchingScoreResponse(BaseModel):
+    score: int = Field(description="Score de compatibilité global sur 100 (pondération logique des sous-scores)")
+    breakdown: ScoreBreakdown
+    matched_skills: list[str] = Field(description="Compétences clés de l'offre trouvées dans le CV")
+    missing_skills: list[str] = Field(description="Compétences exigées par l'offre MAIS absentes du CV")
+    justification: str = Field(description="Un paragraphe court (3-4 phrases) justifiant le score, destiné au recruteur.") 
