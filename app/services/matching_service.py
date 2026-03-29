@@ -187,7 +187,6 @@ class MatchingService:
         content_norm = self._normalize_text2(content)
         
         for loc in locations:
-            print(content_norm)
             if loc and self._normalize_text2(loc) in content_norm:
                 return 1.0
         
