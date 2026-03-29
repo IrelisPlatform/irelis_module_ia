@@ -6,6 +6,7 @@ import os
 
 from app.models.entities import JobOffer
 from app.services.ai.ai_matchind_service import AIMatchingService
+from app.services.ai.scraping_service import WebScrapingService
 from fastapi import APIRouter, Depends, HTTPException, Query, status, File, UploadFile
 from sqlalchemy.orm import Session
 
@@ -57,25 +58,30 @@ async def compute_matching_score_cv(
     db: Annotated[Session, Depends(deps.get_db)],
     link: str = Query(..., alias="link to the job offer"),
     file: UploadFile = File(...)
-):
-    """Return the semantic matching percentage and breakdown between a cv and a job offer using AI."""
-    
+)-> MatchingScoreResponse:
     if file.content_type != "application/pdf":
         raise HTTPException(status_code=400, detail="File must be a PDF")
         
     try:
-        # 1. Extraction de l'UUID
+        offer = None
+        
+        # --- LOGIQUE DE ROUTAGE (DB vs SCRAPING) ---
         if "irelis.net/jobs/" in link:
-            job_offer_id = UUID(link[-36:])  # On prend les 36 derniers caractères pour l'UUID
+            job_offer_id = UUID(link[-36:])  
+            offer = db.query(JobOffer).filter(JobOffer.id == job_offer_id).first()
+            if not offer:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Internal Offer Not Found")
         else:
-            raise HTTPException(status_code=400, detail="Invalid job offer link format")
+            scraper = WebScrapingService()
+            
+            offer = await scraper.scrape_and_extract_offer(link)
+            if not offer:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, 
+                    detail="Impossible d'extraire l'offre d'emploi depuis ce lien externe."
+                )
 
-        # 2. Récupération de l'offre en Base de Données (avec SQLAlchemy)
-        offer = db.query(JobOffer).filter(JobOffer.id == job_offer_id).first()
-        if not offer:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Offer Not Found")
-
-        # 3. Extraction du texte du PDF
+        # --- EXTRACTION DU CV ---
         reader = PdfReader(file.file)
         full_text = []
         for page in reader.pages:
@@ -85,17 +91,15 @@ async def compute_matching_score_cv(
                 
         if not full_text:
             raise HTTPException(status_code=400, detail="Failed to read text content from the PDF")
-        
         cv_content = "\n".join(full_text)
 
-        # 4. Appel de l'IA pour le matching sémantique
         matching_service = AIMatchingService(ai_client)
         response = await matching_service.compute_matching(cv_content, offer)
         
         return response
 
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid UUID in the link")
+        raise HTTPException(status_code=400, detail="Invalid data processing (UUID or Parsing)")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Matching processing failed: {str(e)}")
     finally:

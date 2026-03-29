@@ -52,3 +52,14 @@ class WebScrapingService:
         # On passe le texte nettoyé à Gemini
         offers = await self.ai_service.extract_multiple_from_text(page_text)
         return offers
+    
+    async def scrape_and_extract_offer(self, url: str) -> JobOfferDto | None:
+        """Scrape l'URL d'une offre spécifique et extrait les détails de l'offre."""
+        page_text = await self.get_clean_text_from_url(url)
+        
+        if not page_text or len(page_text) < 50:
+            raise ValueError("Impossible de lire la page ou la page est vide.")
+
+        offers = await self.ai_service.extract_multiple_from_text(page_text)
+        return offers[0] if len(offers)>0 else None
+    

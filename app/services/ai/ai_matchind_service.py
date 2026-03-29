@@ -2,41 +2,56 @@ import json
 from google import genai
 from google.genai import types
 from app.schemas.dtos import MatchingScoreResponse
-# import de ton modèle JobOffer
 
 class AIMatchingService:
     def __init__(self, client: genai.Client):
         self.client = client
         self.model_name = 'gemini-2.5-flash'
 
-    def _format_offer_for_prompt(self, offer) -> str:
-        """Transforme ton objet SQLAlchemy en texte clair pour l'IA."""
-        
-        # On utilise ton ancienne fonction pour nettoyer le JSON Lexical de la description
-        def clean_lexical(json_desc):
-            if not json_desc or not json_desc.startswith("{"): return str(json_desc)
-            try:
-                data = json.loads(json_desc)
-                def recurse(node):
-                    text = ""
-                    if "text" in node: text += node["text"] + " "
-                    if "children" in node:
-                        for child in node["children"]: text += recurse(child)
-                    return text
-                return recurse(data.get("root", {}))
-            except:
-                return str(json_desc)
+    def _clean_lexical(self, json_desc: str) -> str:
+        """Nettoie le JSON de l'éditeur de texte riche."""
+        if not json_desc or not str(json_desc).startswith("{"): return str(json_desc)
+        try:
+            data = json.loads(json_desc)
+            def recurse(node):
+                text = ""
+                if "text" in node: text += node["text"] + " "
+                if "children" in node:
+                    for child in node["children"]: text += recurse(child)
+                return text
+            return recurse(data.get("root", {}))
+        except:
+            return str(json_desc)
 
-        desc_text = clean_lexical(offer.description)
-        cities = [c.city for c in offer.cities] if offer.cities else []
-        languages = [l.language for l in offer.languages] if offer.languages else []
-        tags = [t.name for t in offer.tags] if offer.tags else []
+    def _format_offer_for_prompt(self, offer) -> str:
+        """Adapte l'objet (DB Model ou Pydantic DTO) en texte clair."""
+        
+        # SI C'EST UN DTO PYDANTIC (Issu du Scraping)
+        if hasattr(offer, 'model_dump'):
+            title = offer.title
+            contract = offer.contract_type.value if offer.contract_type else "Non précisé"
+            country = offer.work_country_location
+            cities = offer.work_cities
+            languages = offer.required_languages
+            tags = [t.name for t in offer.tag_dto] if offer.tag_dto else []
+            # Le scraper nous donne déjà du Markdown propre, pas besoin de clean_lexical
+            desc_text = offer.description 
+
+        # SI C'EST UN MODÈLE SQLALCHEMY (Issu de la BD irelis)
+        else:
+            title = offer.title
+            contract = offer.contract_type
+            country = offer.work_country_location
+            cities = [c.city for c in offer.cities] if offer.cities else []
+            languages = [l.language for l in offer.languages] if offer.languages else []
+            tags = [t.name for t in offer.tags] if offer.tags else []
+            desc_text = self._clean_lexical(offer.description)
 
         return f"""
         --- OFFRE D'EMPLOI ---
-        Titre : {offer.title}
-        Type de contrat : {offer.contract_type}
-        Pays : {offer.work_country_location}
+        Titre : {title}
+        Type de contrat : {contract}
+        Pays : {country}
         Villes : {', '.join(cities)}
         Langues requises : {', '.join(languages)}
         Mots-clés/Tags : {', '.join(tags)}
@@ -69,10 +84,9 @@ class AIMatchingService:
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
                     response_schema=MatchingScoreResponse, 
-                    temperature=0.0 # Température 0 : on veut de la logique pure, pas de créativité
+                    temperature=0.0
                 )
             )
-            
             return MatchingScoreResponse.model_validate_json(response.text)
         except Exception as e:
             raise Exception(f"Erreur d'analyse IA : {str(e)}")
