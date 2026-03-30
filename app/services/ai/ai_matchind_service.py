@@ -6,7 +6,7 @@ from app.schemas.dtos import MatchingScoreResponse
 class AIMatchingService:
     def __init__(self, client: genai.Client):
         self.client = client
-        self.model_name = 'gemini-2.5-flash'
+        self.model_name = 'gemini-1.5-flash'
 
     def _clean_lexical(self, json_desc: str) -> str:
         """Nettoie le JSON de l'éditeur de texte riche."""

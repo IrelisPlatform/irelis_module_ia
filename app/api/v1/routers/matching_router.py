@@ -56,7 +56,7 @@ def compute_matching_score(
 )
 async def compute_matching_score_cv(
     db: Annotated[Session, Depends(deps.get_db)],
-    link: str = Query(..., alias="link to the job offer"),
+    link: str = Query(...),
     file: UploadFile = File(...)
 )-> MatchingScoreResponse:
     if file.content_type != "application/pdf":
