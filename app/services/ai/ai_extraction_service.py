@@ -9,7 +9,7 @@ from app.schemas.dtos import JobOfferDto, JobOfferList
 class AIExtractionService:
     def __init__(self):
         self.client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-        self.model_name = 'gemini-1.5-flash'
+        self.model_name = os.getenv("MODEL_NAME")
         self.prompt = """
         Tu es un expert en ressources humaines et un spécialiste de l'analyse de données structurées. 
         Ton objectif est d'analyser le document fourni (qui peut être un texte, une image ou un PDF représentant une offre d'emploi) et d'en extraire toutes les informations pertinentes pour remplir scrupuleusement le schéma JSON attendu.
