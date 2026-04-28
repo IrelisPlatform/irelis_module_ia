@@ -1,12 +1,14 @@
 import json
-from google import genai
-from google.genai import types
-from app.schemas.dtos import MatchingScoreResponse
 import os
+import instructor
+from groq import AsyncGroq
+from app.schemas.dtos import MatchingScoreResponse
+
 class AIMatchingService:
-    def __init__(self, client: genai.Client):
-        self.client = client
-        self.model_name = os.getenv("MODEL_NAME")
+    def __init__(self):
+        # Initialisation du client Groq patché avec Instructor
+        self.client = instructor.from_groq(AsyncGroq(api_key=os.getenv("GROQ_API_KEY")))
+        self.model_name = os.getenv("GROQ_MODEL_NAME")
 
     def _clean_lexical(self, json_desc: str) -> str:
         """Nettoie le JSON de l'éditeur de texte riche."""
@@ -25,8 +27,6 @@ class AIMatchingService:
 
     def _format_offer_for_prompt(self, offer) -> str:
         """Adapte l'objet (DB Model ou Pydantic DTO) en texte clair."""
-        
-        # SI C'EST UN DTO PYDANTIC (Issu du Scraping)
         if hasattr(offer, 'model_dump'):
             title = offer.title
             contract = offer.contract_type.value if offer.contract_type else "Non précisé"
@@ -34,10 +34,7 @@ class AIMatchingService:
             cities = offer.work_cities
             languages = offer.required_languages
             tags = [t.name for t in offer.tag_dto] if offer.tag_dto else []
-            # Le scraper nous donne déjà du Markdown propre, pas besoin de clean_lexical
             desc_text = offer.description 
-
-        # SI C'EST UN MODÈLE SQLALCHEMY (Issu de la BD irelis)
         else:
             title = offer.title
             contract = offer.contract_type
@@ -78,15 +75,18 @@ class AIMatchingService:
         """
 
         try:
-            response = await self.client.aio.models.generate_content(
+            # Appel à Groq via Instructor
+            response = await self.client.chat.completions.create(
                 model=self.model_name,
-                contents=[prompt],
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    response_schema=MatchingScoreResponse, 
-                    temperature=0.0
-                )
+                response_model=MatchingScoreResponse, # Pydantic Model direct
+                messages=[
+                    {"role": "system", "content": "Tu es un assistant spécialisé en ressources humaines. Tu dois répondre avec un JSON parfaitement structuré."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.0
             )
-            return MatchingScoreResponse.model_validate_json(response.text)
+            # Instructor renvoie directement l'objet Pydantic validé !
+            return response
+            
         except Exception as e:
-            raise Exception(f"Erreur d'analyse IA : {str(e)}")
+            raise Exception(f"Erreur d'analyse IA avec Groq : {str(e)}")

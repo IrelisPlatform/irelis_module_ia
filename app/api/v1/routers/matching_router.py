@@ -24,7 +24,6 @@ from google import genai
 
 
 router = APIRouter()
-ai_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 OUTPUT_DIR = "./"
 
@@ -93,7 +92,7 @@ async def compute_matching_score_cv(
             raise HTTPException(status_code=400, detail="Failed to read text content from the PDF")
         cv_content = "\n".join(full_text)
 
-        matching_service = AIMatchingService(ai_client)
+        matching_service = AIMatchingService()
         response = await matching_service.compute_matching(cv_content, offer)
         
         return response

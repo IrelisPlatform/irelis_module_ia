@@ -17,3 +17,5 @@ playwright
 beautifulsoup4
 markdownify
 rapidfuzz
+groq
+instructor
