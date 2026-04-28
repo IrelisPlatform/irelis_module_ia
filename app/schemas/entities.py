@@ -5,7 +5,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field
 
-from app.schemas.dtos import JobOfferDto
+from app.schemas.dtos import CandidateDto, JobOfferDto
 
 from app.models.enums import (
     ApplicationStatus,
@@ -150,7 +150,14 @@ class JobOfferSearchResponse(BaseModel):
     total_pages: int
     first: bool
     last: bool
-
+class CandidateSearchResponse(BaseModel):
+    content: list[CandidateDto] = Field(default_factory=list)
+    page: int
+    size: int
+    total_elements: int
+    total_pages: int
+    first: bool
+    last: bool
 
 class EducationRead(BaseModel):
     id: UUID

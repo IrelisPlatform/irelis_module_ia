@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import math
 from uuid import UUID
 
+from app.schemas.entities import CandidateSearchResponse
 from sqlalchemy.orm import Session
 
 from app.models.enums import SearchTarget, SearchType
@@ -56,7 +58,7 @@ class CandidateService:
         APP_CACHE.set(cache_key, candidate_dto)
         return candidate_dto
 
-    def search_by_boolean_query(self, query: str, user_id: UUID) -> list[CandidateDto]:
+    def search_by_boolean_query(self, query: str, user_id: UUID, page: int, size: int) -> CandidateSearchResponse:
         """Execute a boolean search across candidate profiles."""
         user = self.user_repo.get(user_id)
         if user is None:
@@ -74,13 +76,63 @@ class CandidateService:
             type=SearchType.BOOL,
             target=SearchTarget.CANDIDAT,
         )
-        cache_key = make_cache_key("candidates:boolean_search", user_id, query=query)
+        cache_key = make_cache_key("candidates:boolean_search", user_id, query=query, page=page, size=size)
         found, cached = APP_CACHE.get(cache_key)
         if found:
-            self.search_repo.record_search(user_id, payload)
             return cached
 
-        candidates = [candidate_to_dto(candidate) for candidate in self.repo.search_by_boolean_query(query)]
-        self.search_repo.record_search(user_id, payload)
-        APP_CACHE.set(cache_key, candidates)
-        return candidates
+        total_elements, candidates_models = self.repo.search_by_boolean_query(query, page, size)
+        
+        return self._build_paginated_response(candidates_models, page, size, total_elements, cache_key, user_id, query, "BOOL")
+
+    def search_by_normal_query(self, query: str, user_id: UUID, page: int, size: int) -> CandidateSearchResponse:
+        """Execute a standard keyword search across candidate profiles."""
+        user = self.user_repo.get(user_id)
+        if user is None:
+            raise LookupError("Utilisateur introuvable")
+
+        recruiter = self.recruiter_repo.get_by_user_id(user_id)
+        if recruiter is None:
+            raise PermissionError(
+                "L'utilisateur n'est associé à aucun compte recruteur"
+            )
+
+        # Enregistrement de la recherche (Adapte le SearchType selon tes enums existantes)
+        payload = SearchCreate(
+            user_id=user_id,
+            query=query,
+            type=SearchType.NOT,
+            target=SearchTarget.CANDIDAT,
+        )
+        
+        cache_key = make_cache_key("candidates:normal_search", user_id, query=query, page=page, size=size)
+        found, cached = APP_CACHE.get(cache_key)
+        if found:
+            return cached
+
+        total_elements, candidates_models = self.repo.search_candidates_by_keywords(query, page, size)
+        
+        return self._build_paginated_response(candidates_models, page, size, total_elements, cache_key, user_id, query, SearchType.NOT)
+    
+    def _build_paginated_response(self, candidates_models, page, size, total_elements, cache_key, user_id, query, search_type) -> CandidateSearchResponse:
+    
+        candidates_dto = [candidate_to_dto(c) for c in candidates_models]
+        total_pages = math.ceil(total_elements / size) if size > 0 else 0
+        
+        response = CandidateSearchResponse(
+            content=candidates_dto,
+            page=page,
+            size=size,
+            total_elements=total_elements,
+            total_pages=total_pages,
+            first=(page == 1),
+            last=(page >= total_pages or total_pages == 0)
+        )
+        
+        # Enregistrer la recherche uniquement sur la première page (pour les stats)
+        if page == 1:
+            payload = SearchCreate(user_id=user_id, query=query, type=search_type, target=SearchTarget.CANDIDAT)
+            self.search_repo.record_search(user_id, payload)
+            
+        APP_CACHE.set(cache_key, response)
+        return response
