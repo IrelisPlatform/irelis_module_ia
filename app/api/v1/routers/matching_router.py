@@ -19,7 +19,6 @@ from app.schemas import (
     MatchingScoreResponse,
 )
 from app.services.matching_service import MatchingService
-from app.utils.cache import APP_CACHE, make_cache_key
 from google import genai
 
 
@@ -29,7 +28,7 @@ OUTPUT_DIR = "./"
 
 
 @router.post(
-    "/matching/score",
+    "/matching/score", 
     # response_model=MatchingScoreResponse,
     tags=["matching"],
 )

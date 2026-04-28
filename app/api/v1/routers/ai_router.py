@@ -21,14 +21,14 @@ async def extract_job_offer_file(
                 detail="Please provide a file."
             )
             
-        if file and file.content_type not in ["application/pdf", "image/jpeg", "image/png", "image/webp"]:
+        if file and file.content_type not in ["application/pdf", "image/jpeg", "image/jpg", "image/png", "image/webp"]:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, 
                 detail="Do not support this format. Use PDF, JPEG, PNG ou WEBP."
             )
 
         ai_service = AIExtractionService()
-        extracted_offer = await ai_service.extract_from_payload_file( file)
+        extracted_offer = await ai_service.extract_from_payload_file(file)
         
         return extracted_offer
 
